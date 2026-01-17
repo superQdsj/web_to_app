@@ -9,13 +9,13 @@
 
 ## 配置 Cookie（必需）
 
-把你的 Cookie 放到仓库根目录的 `nga_cookie.txt`：
+把你的 Cookie 放到仓库根目录的 `private/nga_cookie.txt`：
 
 - 支持直接放 cookie 值：`a=1; b=2`
 - 支持 `Cookie: a=1; b=2`
 - 支持粘贴完整 cURL 片段（包含 `-b '...'`）
 
-注意：`nga_cookie.txt` 是敏感信息文件，已在 `.gitignore` 中忽略，不要提交。
+注意：`private/` 是敏感信息目录，已在 `.gitignore` 中忽略，不要提交。
 
 ## 安装依赖
 
@@ -26,13 +26,13 @@ fvm dart pub get
 
 ## 使用
 
-推荐用根目录脚本：
+推荐用 `scripts/` 下的脚本：
 
 ### 导出版面主题列表（fid）
 
 ```bash
-./fetch_dart fid7
-./fetch_dart fid=7
+./scripts/fetch_dart fid7
+./scripts/fetch_dart fid=7
 ```
 
 输出示例：
@@ -43,8 +43,8 @@ fvm dart pub get
 ### 导出单个帖子（tid）
 
 ```bash
-./fetch_dart tid=45060283
-./fetch_dart 45060283
+./scripts/fetch_dart tid=45060283
+./scripts/fetch_dart 45060283
 ```
 
 输出示例：
@@ -54,7 +54,7 @@ fvm dart pub get
 ### 回复主贴（reply）
 
 ```bash
-./reply --tid 45960168 --fid -444012 --content "这是帖子的回复内容"
+./scripts/reply --tid 45960168 --fid -444012 --content "这是帖子的回复内容"
 ```
 
 说明：

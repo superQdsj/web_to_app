@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dart_dir="$root_dir/nga_fetcher_dart"
+default_cookie_file="$root_dir/private/nga_cookie.txt"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./scripts/reply --tid <tid> --fid <fid> --content <text>
+
+Examples:
+  ./scripts/reply --tid 45960168 --fid -444012 --content "这是帖子的回复内容"
+
+Notes:
+- Uses: fvm dart run nga_fetcher_dart reply
+- Default cookie file: nga_cookie.txt (gitignored, contains sensitive data)
+- Response errors are printed to stderr and exit code is non-zero
+EOF
+}
+
+if [[ $# -lt 1 ]]; then
+  usage
+  exit 2
+fi
+
+if ! command -v fvm >/dev/null 2>&1; then
+  echo "ERROR: fvm not found in PATH" >&2
+  exit 1
+fi
+
+if [[ ! -d "$dart_dir" ]]; then
+  echo "ERROR: dart project not found: $dart_dir" >&2
+  exit 1
+fi
+
+if [[ ! -f "$default_cookie_file" ]]; then
+  echo "ERROR: cookie file not found: $default_cookie_file" >&2
+  echo "Put your copied cURL (with -b '...') into that file." >&2
+  exit 1
+fi
+
+if [[ "$1" == "-h" || "$1" == "--help" || "$1" == "help" ]]; then
+  usage
+  exit 0
+fi
+
+(
+  cd "$dart_dir"
+  fvm dart run nga_fetcher_dart reply \
+    --cookie-file "$default_cookie_file" \
+    "$@"
+)

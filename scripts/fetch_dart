@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dart_dir="$root_dir/nga_fetcher_dart"
-default_cookie_file="$root_dir/nga_cookie.txt"
+default_cookie_file="$root_dir/private/nga_cookie.txt"
 
 usage() {
   cat <<'EOF'
@@ -15,12 +15,12 @@ Usage:
   fetch_dart <tid> [out_dir]
 
 Examples:
-  ./fetch_dart fid7
-  ./fetch_dart fid=7
-  ./fetch_dart tid=45060283
-  ./fetch_dart t=45060283
-  ./fetch_dart 45060283
-  ./fetch_dart 45060283 out/thread_45060283_dart
+  ./scripts/fetch_dart fid7
+  ./scripts/fetch_dart fid=7
+  ./scripts/fetch_dart tid=45060283
+  ./scripts/fetch_dart t=45060283
+  ./scripts/fetch_dart 45060283
+  ./scripts/fetch_dart 45060283 out/thread_45060283_dart
 
 Notes:
 - Uses: fvm dart run nga_fetcher_dart ...
