@@ -3,7 +3,7 @@ set -euo pipefail
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dart_dir="$root_dir/nga_fetcher_dart"
-default_cookie_file="$root_dir/private/nga_cookie.txt"
+env_file="$root_dir/.env"
 
 usage() {
   cat <<'EOF'
@@ -24,7 +24,9 @@ Examples:
 
 Notes:
 - Uses: fvm dart run nga_fetcher_dart ...
-- Default cookie file: nga_cookie.txt (gitignored, contains sensitive data)
+- Cookie sources (in priority order):
+  1. NGA_COOKIE environment variable
+  2. .env file with NGA_COOKIE=...
 - Forum writes: meta.json, threads.json, forum.html
 - Thread writes: thread.json, thread.html
 EOF
@@ -45,10 +47,9 @@ if [[ ! -d "$dart_dir" ]]; then
   exit 1
 fi
 
-if [[ ! -f "$default_cookie_file" ]]; then
-  echo "ERROR: cookie file not found: $default_cookie_file" >&2
-  echo "Put your copied cURL (with -b '...') into that file." >&2
-  exit 1
+# Cookie must be provided via NGA_COOKIE or .env
+if [[ ! -f "$env_file" && -z "${NGA_COOKIE:-}" ]]; then
+  echo "WARNING: No cookie source found. Expecting NGA_COOKIE in .env or environment." >&2
 fi
 
 cmd="$1"
@@ -66,7 +67,6 @@ case "$cmd" in
       cd "$dart_dir"
       fvm dart run nga_fetcher_dart export-forum \
         --fid "$fid" \
-        --cookie-file "$default_cookie_file" \
         --out-dir "$root_dir/$out_dir" \
         --save-html
     )
@@ -78,7 +78,6 @@ case "$cmd" in
       cd "$dart_dir"
       fvm dart run nga_fetcher_dart export-forum \
         --fid "$fid" \
-        --cookie-file "$default_cookie_file" \
         --out-dir "$root_dir/$out_dir" \
         --save-html
     )
@@ -90,7 +89,6 @@ case "$cmd" in
       cd "$dart_dir"
       fvm dart run nga_fetcher_dart export-thread \
         --tid "$tid" \
-        --cookie-file "$default_cookie_file" \
         --out-dir "$root_dir/$out_dir" \
         --save-html
     )
@@ -102,7 +100,6 @@ case "$cmd" in
       cd "$dart_dir"
       fvm dart run nga_fetcher_dart export-thread \
         --tid "$tid" \
-        --cookie-file "$default_cookie_file" \
         --out-dir "$root_dir/$out_dir" \
         --save-html
     )
@@ -114,7 +111,6 @@ case "$cmd" in
       cd "$dart_dir"
       fvm dart run nga_fetcher_dart export-thread \
         --tid "$tid" \
-        --cookie-file "$default_cookie_file" \
         --out-dir "$root_dir/$out_dir" \
         --save-html
     )

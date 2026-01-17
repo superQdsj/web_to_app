@@ -5,16 +5,15 @@
 - `nga_fetcher_dart/`: Dart CLI + parsing library (current implementation).
 - `scripts/fetch_dart`: convenience wrapper around the Dart CLI that exports into `out/`.
 - `scripts/reply`: reply helper (uses cookie auth).
-- `private/nga_cookie.txt`: local cookie input file (sensitive; git-ignored; do not commit secrets).
+- `.env`: local cookie input (sensitive; git-ignored; do not commit secrets).
 - `out/`: generated artifacts (`meta.json`, `threads.json`, optional `forum.html`/`thread.html`) and is git-ignored.
 
 ## Build, Test, and Development Commands
 
 - Ensure `fvm` is installed and Flutter/Dart SDK is set up.
 - Install deps: `cd nga_fetcher_dart && fvm dart pub get`
-- Configure auth (pick one):
-  - Put your copied cURL snippet (with `-b '...'`) or a `Cookie:` line into `private/nga_cookie.txt`, or
-  - Pass `--cookie-file <path>` to the CLI/scripts.
+- Configure auth:
+  - Put your cookie into `.env` as `NGA_COOKIE=...` (supports raw cookie, `Cookie:` header, or cURL snippet with `-b '...'`).
 - Export forum or thread:
   - `./scripts/fetch_dart fid7`
   - `./scripts/fetch_dart tid=45060283`

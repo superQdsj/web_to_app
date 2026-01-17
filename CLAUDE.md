@@ -26,7 +26,7 @@ cd nga_fetcher_dart && fvm dart format .
 
 **Prerequisites:**
 - `fvm` (Flutter Version Manager) installed
-- Cookie file at `private/nga_cookie.txt` (supports raw cookie, `Cookie:` header, or cURL format)
+- Cookie configured via `.env` (`NGA_COOKIE=...`) or environment variable
 
 **Usage via wrapper scripts:**
 ```bash

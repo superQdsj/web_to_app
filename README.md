@@ -32,8 +32,7 @@ NGA Fetcher 旨在为开发者提供一个简单高效的方式来获取 NGA 论
 ├── scripts/
 │   ├── fetch_dart              # 便捷抓取脚本 (支持 fid 和 tid)
 │   └── reply                   # 便捷回帖脚本
-├── private/                    # 敏感文件目录 (已忽略)
-│   └── nga_cookie.txt          # 用户 Cookie 配置文件
+├── private/                    # 本地敏感文件目录 (已忽略)
 └── out/                        # 数据输出目录 (已忽略)
 ```
 
@@ -52,13 +51,15 @@ cd nga_fetcher_dart && fvm dart pub get
 
 ### 2. 配置 Cookie
 
-在项目根目录下创建 `private/nga_cookie.txt`，支持以下三种格式：
+在项目根目录创建 `.env` 文件，并设置 `NGA_COOKIE=...`。
+
+支持以下三种输入格式（工具会自动提取/归一化）：
 
 1. **原始 Cookie 字符串**: `ngaPassportUid=123; ngaPassportToken=abc...`
 2. **标准 Header 格式**: `Cookie: ngaPassportUid=123; ...`
-3. **cURL 命令**: 直接粘贴从浏览器复制的 cURL 脚本，工具会自动提取 `-b` 参数中的值。
+3. **cURL 片段**: 直接粘贴包含 `-b '...'` 的 cURL 片段，工具会自动提取 `-b` 参数中的值。
 
-> **注意**: 请勿将该文件提交到 Git 仓库，以免泄露账号隐私。
+> **注意**: `.env` 属于敏感信息文件，请勿提交到 Git 仓库。
 
 ## 使用指南
 
@@ -83,13 +84,13 @@ cd nga_fetcher_dart && fvm dart pub get
 你也可以直接通过 `fvm dart run` 调用各条子命令：
 
 1. **`export-forum`**: 导出版面主题
-   - 参数: `--fid`, `--cookie-file`, `--out-dir`, `--save-html`, `--timeout`
+   - 参数: `--fid`, `--out-dir`, `--save-html`, `--timeout`
 2. **`export-thread`**: 导出帖子详情
-   - 参数: `--tid`, `--cookie-file`, `--out-dir`, `--save-html`, `--timeout`
+   - 参数: `--tid`, `--out-dir`, `--save-html`, `--timeout`
 3. **`parse-forum-file`**: 解析本地 HTML 文件
    - 参数: `--in`
 4. **`reply`**: 发表回复
-   - 参数: `--tid`, `--fid`, `--content`, `--cookie-file`, `--timeout`
+   - 参数: `--tid`, `--fid`, `--content`, `--timeout`
 
 ## 输出数据格式
 

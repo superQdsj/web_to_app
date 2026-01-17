@@ -11,7 +11,6 @@ Future<int> main(List<String> arguments) async {
 
   parser.addCommand('export-forum')
     ..addOption('fid', defaultsTo: '7')
-    ..addOption('cookie-file', defaultsTo: 'nga_cookie.txt')
     ..addOption('out-dir', help: 'Output dir', defaultsTo: 'out/nga_fid7_dart')
     ..addFlag('save-html', defaultsTo: true)
     ..addOption('timeout', defaultsTo: '30');
@@ -23,7 +22,6 @@ Future<int> main(List<String> arguments) async {
 
   parser.addCommand('export-thread')
     ..addOption('tid', help: 'Thread ID', mandatory: true)
-    ..addOption('cookie-file', defaultsTo: 'nga_cookie.txt')
     ..addOption('out-dir', help: 'Output dir')
     ..addFlag('save-html', defaultsTo: true)
     ..addOption('timeout', defaultsTo: '30');
@@ -32,7 +30,7 @@ Future<int> main(List<String> arguments) async {
     ..addOption('tid', help: 'Thread ID', mandatory: true)
     ..addOption('fid', help: 'Forum ID', mandatory: true)
     ..addOption('content', help: 'Reply content', mandatory: true)
-    ..addOption('cookie-file', defaultsTo: 'nga_cookie.txt')
+    ..addOption('pid', help: 'Post ID to reply to (optional, for reply-to-reply)')
     ..addOption('timeout', defaultsTo: '30');
 
   if (arguments.isEmpty || arguments.first == '-h' || arguments.first == '--help') {
@@ -68,7 +66,7 @@ void _printUsage(ArgParser parser) {
   stdout.writeln('  fvm dart run nga_fetcher_dart export-thread --tid <tid>');
   stdout.writeln('  fvm dart run nga_fetcher_dart parse-forum-file --in <file>');
   stdout.writeln(
-      '  fvm dart run nga_fetcher_dart reply --tid <tid> --fid <fid> --content <text>');
+      '  fvm dart run nga_fetcher_dart reply --tid <tid> --fid <fid> --content <text> [--pid <pid>]');
   stdout.writeln('');
   stdout.writeln('Commands:');
   stdout.writeln(parser.usage);
@@ -76,14 +74,14 @@ void _printUsage(ArgParser parser) {
 
 Future<int> _cmdExportForum(ArgResults args) async {
   final fid = int.tryParse(args.option('fid') ?? '7') ?? 7;
-  final cookieFile = args.option('cookie-file') ?? 'mvp_nga_fetcher/nga_cookie.txt';
+
   final outDir = args.option('out-dir') ?? 'out/nga_fid${fid}_dart';
   final saveHtml = args.flag('save-html');
   final timeoutSec = int.tryParse(args.option('timeout') ?? '30') ?? 30;
 
-  final cookieValue = CookieFileParser.loadCookieHeaderValue(cookieFile);
+  final cookieValue = _loadCookie();
   if (cookieValue.isEmpty) {
-    stderr.writeln('ERROR: cookie is empty. Check $cookieFile');
+    stderr.writeln('ERROR: cookie is empty. Set NGA_COOKIE in .env or environment');
     return 2;
   }
 
@@ -175,15 +173,15 @@ Future<int> _cmdParseForumFile(ArgResults args) async {
 
 Future<int> _cmdExportThread(ArgResults args) async {
   final tid = int.parse(args.option('tid')!);
-  final cookieFile = args.option('cookie-file') ?? 'mvp_nga_fetcher/nga_cookie.txt';
+
   final saveHtml = args.flag('save-html');
   final timeoutSec = int.tryParse(args.option('timeout') ?? '30') ?? 30;
 
   final outDir = args.option('out-dir') ?? 'out/thread_$tid';
 
-  final cookieValue = CookieFileParser.loadCookieHeaderValue(cookieFile);
+  final cookieValue = _loadCookie();
   if (cookieValue.isEmpty) {
-    stderr.writeln('ERROR: cookie is empty. Check $cookieFile');
+    stderr.writeln('ERROR: cookie is empty. Set NGA_COOKIE in .env or environment');
     return 2;
   }
 
@@ -231,7 +229,8 @@ Future<int> _cmdReply(ArgResults args) async {
   final tid = int.parse(args.option('tid')!);
   final fid = int.parse(args.option('fid')!);
   final content = args.option('content') ?? '';
-  final cookieFile = args.option('cookie-file') ?? 'mvp_nga_fetcher/nga_cookie.txt';
+  final pid = args.option('pid') ?? '';
+
   final timeoutSec = int.tryParse(args.option('timeout') ?? '30') ?? 30;
 
   if (content.trim().isEmpty) {
@@ -239,9 +238,9 @@ Future<int> _cmdReply(ArgResults args) async {
     return 2;
   }
 
-  final cookieValue = CookieFileParser.loadCookieHeaderValue(cookieFile);
+  final cookieValue = _loadCookie();
   if (cookieValue.isEmpty) {
-    stderr.writeln('ERROR: cookie is empty. Check $cookieFile');
+    stderr.writeln('ERROR: cookie is empty. Set NGA_COOKIE in .env or environment');
     return 2;
   }
 
@@ -252,7 +251,7 @@ Future<int> _cmdReply(ArgResults args) async {
       'action': 'reply',
       'fid': '',
       'tid': tid.toString(),
-      'pid': '',
+      'pid': pid,
       'stid': '',
       'comment': '',
     };
@@ -282,11 +281,15 @@ Future<int> _cmdReply(ArgResults args) async {
       return 2;
     }
 
+    // If pid is specified, auto-add quote header
+    final postContent = pid.isNotEmpty ? '[pid=$pid,$tid]Reply[/pid]\n\n$content' : content;
+
     final postFields = {
       'action': 'reply',
       'fid': fid.toString(),
       'tid': tid.toString(),
-      'post_content': content,
+      'pid': pid,
+      'post_content': postContent,
       'from_device': 'Nexus 5',
       'from_client': '100',
       'nojump': '1',
@@ -364,4 +367,9 @@ void _printPostFailure(String stage, PostResponse result) {
 void _writeJson(File file, Object value) {
   final encoder = const JsonEncoder.withIndent('  ');
   file.writeAsStringSync('${encoder.convert(value)}\n');
+}
+
+/// 加载 cookie，来源: 环境变量 > .env
+String _loadCookie() {
+  return CookieLoader.load();
 }
