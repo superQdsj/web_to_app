@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+py="$root_dir/mvp_nga_fetcher/main.py"
+default_cookie_file="$root_dir/mvp_nga_fetcher/nga_cookie.txt"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  fetch fid7 [out_dir]
+  fetch fid=<num> [out_dir]
+  fetch url <forum_url> [out_dir]
+
+Examples:
+  fetch fid7
+  fetch fid=7
+  fetch url "https://bbs.nga.cn/thread.php?fid=7" out/nga_custom
+
+Notes:
+- Default cookie file: mvp_nga_fetcher/nga_cookie.txt
+- Writes: threads.json, meta.json, and forum.html
+EOF
+}
+
+if [[ ! -f "$py" ]]; then
+  echo "ERROR: not found: $py" >&2
+  exit 1
+fi
+
+if [[ $# -lt 1 ]]; then
+  usage
+  exit 2
+fi
+
+cmd="$1"
+shift || true
+
+url=""
+out_dir=""
+
+case "$cmd" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  fid7)
+    url="https://bbs.nga.cn/thread.php?fid=7"
+    out_dir="${1:-out/nga_fid7}"
+    ;;
+  fid=*)
+    fid="${cmd#fid=}"
+    url="https://bbs.nga.cn/thread.php?fid=${fid}"
+    out_dir="${1:-out/nga_fid${fid}}"
+    ;;
+  url)
+    if [[ $# -lt 1 ]]; then
+      echo "ERROR: missing forum_url" >&2
+      usage
+      exit 2
+    fi
+    url="$1"
+    out_dir="${2:-out/nga_custom}"
+    ;;
+  *)
+    echo "ERROR: unknown command: $cmd" >&2
+    usage
+    exit 2
+    ;;
+esac
+
+if [[ ! -f "$default_cookie_file" ]]; then
+  echo "ERROR: cookie file not found: $default_cookie_file" >&2
+  echo "Put your copied cURL (with -b '...') into that file." >&2
+  exit 1
+fi
+
+python3 "$py" export "$url" \
+  --cookie-file "$default_cookie_file" \
+  --out-dir "$root_dir/$out_dir" \
+  --save-html
