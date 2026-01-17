@@ -128,7 +128,7 @@ Future<int> _cmdExportForum(ArgResults args) async {
     stdout.writeln('Wrote ${out.path}/threads.json');
     return 0;
   } finally {
-    await client.close();
+    client.close();
   }
 }
 
@@ -221,7 +221,7 @@ Future<int> _cmdExportThread(ArgResults args) async {
     stdout.writeln('Wrote ${out.path}/thread.json');
     return 0;
   } finally {
-    await client.close();
+    client.close();
   }
 }
 
@@ -328,7 +328,7 @@ Future<int> _cmdReply(ArgResults args) async {
     }
     return 0;
   } finally {
-    await client.close();
+    client.close();
   }
 }
 

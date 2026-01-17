@@ -1,0 +1,29 @@
+PODS:
+  - Flutter (1.0.0)
+  - webview_cookie_manager_plus (0.0.1):
+    - Flutter
+  - webview_flutter_wkwebview (0.0.1):
+    - Flutter
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - webview_cookie_manager_plus (from `.symlinks/plugins/webview_cookie_manager_plus/ios`)
+  - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  webview_cookie_manager_plus:
+    :path: ".symlinks/plugins/webview_cookie_manager_plus/ios"
+  webview_flutter_wkwebview:
+    :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
+
+SPEC CHECKSUMS:
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  webview_cookie_manager_plus: bb56cf9e53c086a22a2aa033ec6ce374da3095b6
+  webview_flutter_wkwebview: 29eb20d43355b48fe7d07113835b9128f84e3af4
+
+PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
+
+COCOAPODS: 1.15.2
