@@ -28,6 +28,13 @@ Future<int> main(List<String> arguments) async {
     ..addFlag('save-html', defaultsTo: true)
     ..addOption('timeout', defaultsTo: '30');
 
+  parser.addCommand('reply')
+    ..addOption('tid', help: 'Thread ID', mandatory: true)
+    ..addOption('fid', help: 'Forum ID', mandatory: true)
+    ..addOption('content', help: 'Reply content', mandatory: true)
+    ..addOption('cookie-file', defaultsTo: 'nga_cookie.txt')
+    ..addOption('timeout', defaultsTo: '30');
+
   if (arguments.isEmpty || arguments.first == '-h' || arguments.first == '--help') {
     _printUsage(parser);
     return 0;
@@ -47,6 +54,8 @@ Future<int> main(List<String> arguments) async {
       return await _cmdParseForumFile(command);
     case 'export-thread':
       return await _cmdExportThread(command);
+    case 'reply':
+      return await _cmdReply(command);
     default:
       _printUsage(parser);
       return 2;
@@ -58,6 +67,8 @@ void _printUsage(ArgParser parser) {
   stdout.writeln('  fvm dart run nga_fetcher_dart export-forum [--fid 7]');
   stdout.writeln('  fvm dart run nga_fetcher_dart export-thread --tid <tid>');
   stdout.writeln('  fvm dart run nga_fetcher_dart parse-forum-file --in <file>');
+  stdout.writeln(
+      '  fvm dart run nga_fetcher_dart reply --tid <tid> --fid <fid> --content <text>');
   stdout.writeln('');
   stdout.writeln('Commands:');
   stdout.writeln(parser.usage);
@@ -216,11 +227,138 @@ Future<int> _cmdExportThread(ArgResults args) async {
   }
 }
 
+Future<int> _cmdReply(ArgResults args) async {
+  final tid = int.parse(args.option('tid')!);
+  final fid = int.parse(args.option('fid')!);
+  final content = args.option('content') ?? '';
+  final cookieFile = args.option('cookie-file') ?? 'mvp_nga_fetcher/nga_cookie.txt';
+  final timeoutSec = int.tryParse(args.option('timeout') ?? '30') ?? 30;
+
+  if (content.trim().isEmpty) {
+    stderr.writeln('ERROR: content is empty');
+    return 2;
+  }
+
+  final cookieValue = CookieFileParser.loadCookieHeaderValue(cookieFile);
+  if (cookieValue.isEmpty) {
+    stderr.writeln('ERROR: cookie is empty. Check $cookieFile');
+    return 2;
+  }
+
+  final client = NgaHttpClient();
+  try {
+    final preflightFields = {
+      '__output': '3',
+      'action': 'reply',
+      'fid': '',
+      'tid': tid.toString(),
+      'pid': '',
+      'stid': '',
+      'comment': '',
+    };
+
+    final preflightBody = formUrlEncodeBytes(preflightFields);
+    final preflightResp = await client.postBytes(
+      Uri.parse('$_baseUrl/post.php'),
+      cookieHeaderValue: cookieValue,
+      bodyBytes: preflightBody,
+      headers: {
+        HttpHeaders.contentTypeHeader: 'application/x-www-form-urlencoded',
+        'origin': _baseUrl,
+        HttpHeaders.refererHeader: '$_baseUrl/read.php?tid=$tid',
+      },
+      timeout: Duration(seconds: timeoutSec),
+    );
+
+    final preflightText = DecodeBestEffort.decode(
+      preflightResp.bodyBytes,
+      contentTypeHeader: _headerValue(preflightResp.headers, 'content-type'),
+      htmlTextPreview: latin1.decode(preflightResp.bodyBytes.take(2048).toList()),
+    );
+
+    final preflightResult = _parsePostResult(preflightText, 'preflight');
+    if (!preflightResult.isSuccess) {
+      _printPostFailure('preflight', preflightResult);
+      return 2;
+    }
+
+    final postFields = {
+      'action': 'reply',
+      'fid': fid.toString(),
+      'tid': tid.toString(),
+      'post_content': content,
+      'from_device': 'Nexus 5',
+      'from_client': '100',
+      'nojump': '1',
+      'lite': 'htmljs',
+      'step': '2',
+    };
+
+    final postBody = formUrlEncodeBytes(postFields);
+    final postResp = await client.postBytes(
+      Uri.parse('$_baseUrl/post.php'),
+      cookieHeaderValue: cookieValue,
+      bodyBytes: postBody,
+      headers: {
+        HttpHeaders.contentTypeHeader: 'application/x-www-form-urlencoded',
+        'origin': _baseUrl,
+        HttpHeaders.refererHeader: '$_baseUrl/read.php?tid=$tid',
+      },
+      timeout: Duration(seconds: timeoutSec),
+    );
+
+    final postText = DecodeBestEffort.decode(
+      postResp.bodyBytes,
+      contentTypeHeader: _headerValue(postResp.headers, 'content-type'),
+      htmlTextPreview: latin1.decode(postResp.bodyBytes.take(2048).toList()),
+    );
+
+    final postResult = _parsePostResult(postText, 'submit');
+    if (!postResult.isSuccess) {
+      _printPostFailure('submit', postResult);
+      return 2;
+    }
+
+    stdout.writeln(postResult.message ?? '发贴完毕');
+    if (postResult.redirectUrl != null) {
+      stdout.writeln(postResult.redirectUrl);
+    }
+    return 0;
+  } finally {
+    await client.close();
+  }
+}
+
 String? _headerValue(Map<String, String> headers, String keyLower) {
   for (final entry in headers.entries) {
     if (entry.key.toLowerCase() == keyLower) return entry.value;
   }
   return null;
+}
+
+PostResponse _parsePostResult(String htmlText, String stage) {
+  try {
+    return parsePostResponse(htmlText);
+  } on FormatException catch (e) {
+    stderr.writeln('ERROR: failed to parse $stage response: ${e.message}');
+    final end = htmlText.length < 800 ? htmlText.length : 800;
+    stderr.writeln(htmlText.substring(0, end));
+    return PostResponse(
+      code: null,
+      status: null,
+      message: 'unparseable response',
+      detailHtml: null,
+      redirectUrl: null,
+    );
+  }
+}
+
+void _printPostFailure(String stage, PostResponse result) {
+  final message = result.message ?? 'unknown error';
+  stderr.writeln('ERROR: reply $stage failed: $message');
+  if (result.detailHtml != null && result.detailHtml!.isNotEmpty) {
+    stderr.writeln(result.detailHtml);
+  }
 }
 
 void _writeJson(File file, Object value) {

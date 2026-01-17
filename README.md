@@ -51,6 +51,17 @@ fvm dart pub get
 - `out/thread_45060283_dart/thread.json`
 - `out/thread_45060283_dart/thread.html`（默认保存）
 
+### 回复主贴（reply）
+
+```bash
+./reply --tid 45960168 --fid -444012 --content "这是帖子的回复内容"
+```
+
+说明：
+- 需要已登录的 `nga_cookie.txt`，否则会报错退出
+- 失败时会打印原因（例如权限不足/间隔太短）并返回非 0
+- `post_content` 按 GB18030 做 `application/x-www-form-urlencoded` 编码
+
 ## 运行测试
 
 ```bash

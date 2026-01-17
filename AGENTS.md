@@ -17,6 +17,7 @@
   - `./fetch_dart fid7`
   - `./fetch_dart tid=45060283`
 - Run tests: `cd nga_fetcher_dart && fvm dart test`
+- Reply (manual check): `./reply --tid <tid> --fid <fid> --content "text"`
 
 ## Coding Style & Naming Conventions
 
