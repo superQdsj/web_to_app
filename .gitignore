@@ -48,3 +48,6 @@ out/
 *.log
 nga_cookie.txt
 *.json
+
+# FVM Version Cache
+.fvm/
