@@ -80,7 +80,7 @@ class NgaRepository {
   }
 
   /// Closes the underlying HTTP client.
-  Future<void> close() async {
-    await _client.close();
+  void close() {
+    _client.close();
   }
 }

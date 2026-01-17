@@ -20,3 +20,5 @@ private/
 
 # FVM Version Cache
 .fvm/
+
+.opencode/

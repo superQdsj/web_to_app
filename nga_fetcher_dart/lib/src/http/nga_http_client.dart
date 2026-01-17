@@ -44,9 +44,12 @@ class NgaHttpClient {
 
     final response = await _client
         .get(url, headers: headers)
-        .timeout(timeout, onTimeout: () {
-      throw TimeoutException('timeout fetching $url');
-    });
+        .timeout(
+          timeout,
+          onTimeout: () {
+            throw TimeoutException('timeout fetching $url');
+          },
+        );
 
     return NgaHttpResponse(
       url: url,
@@ -75,9 +78,12 @@ class NgaHttpClient {
 
     final response = await _client
         .post(url, headers: mergedHeaders, body: bodyBytes)
-        .timeout(timeout, onTimeout: () {
-      throw TimeoutException('timeout posting $url');
-    });
+        .timeout(
+          timeout,
+          onTimeout: () {
+            throw TimeoutException('timeout posting $url');
+          },
+        );
 
     return NgaHttpResponse(
       url: url,
@@ -87,7 +93,7 @@ class NgaHttpClient {
     );
   }
 
-  Future<void> close() async {
+  void close() {
     _client.close();
   }
 }

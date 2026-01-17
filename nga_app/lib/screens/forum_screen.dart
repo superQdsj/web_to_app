@@ -22,12 +22,18 @@ class _ForumScreenState extends State<ForumScreen> {
   bool _loading = false;
   String? _error;
 
-  NgaRepository? _repository;
+  late final NgaRepository _repository;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = NgaRepository(cookie: NgaEnv.cookie);
+  }
 
   @override
   void dispose() {
     _fidController.dispose();
-    _repository?.close();
+    _repository.close();
     super.dispose();
   }
 
@@ -55,10 +61,7 @@ class _ForumScreenState extends State<ForumScreen> {
     });
 
     try {
-      _repository?.close();
-      _repository = NgaRepository(cookie: NgaEnv.cookie);
-
-      final threads = await _repository!.fetchForumThreads(fid);
+      final threads = await _repository.fetchForumThreads(fid);
 
       setState(() {
         _threads.addAll(threads);

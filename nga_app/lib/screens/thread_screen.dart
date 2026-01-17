@@ -26,17 +26,18 @@ class _ThreadScreenState extends State<ThreadScreen> {
   bool _loading = true;
   String? _error;
 
-  NgaRepository? _repository;
+  late final NgaRepository _repository;
 
   @override
   void initState() {
     super.initState();
+    _repository = NgaRepository(cookie: NgaEnv.cookie);
     _fetchThread();
   }
 
   @override
   void dispose() {
-    _repository?.close();
+    _repository.close();
     super.dispose();
   }
 
@@ -55,10 +56,7 @@ class _ThreadScreenState extends State<ThreadScreen> {
     });
 
     try {
-      _repository?.close();
-      _repository = NgaRepository(cookie: NgaEnv.cookie);
-
-      final detail = await _repository!.fetchThread(widget.tid);
+      final detail = await _repository.fetchThread(widget.tid);
 
       setState(() {
         _detail = detail;
