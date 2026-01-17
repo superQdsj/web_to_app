@@ -35,9 +35,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # Local dependency: NGA fetcher library (HTTP client, parsers, models)
-  nga_fetcher_dart:
-    path: ../nga_fetcher_dart
+  http: ^1.6.0
+  html: ^0.15.6
+  charset: ^2.0.1
 
 dev_dependencies:
   flutter_test:

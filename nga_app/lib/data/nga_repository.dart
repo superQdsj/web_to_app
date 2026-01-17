@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:nga_fetcher_dart/nga_fetcher_dart.dart';
+import '../src/nga_fetcher.dart';
 
 /// Repository for fetching NGA forum data.
 ///
 /// Reuses [NgaHttpClient], [DecodeBestEffort], [ForumParser], and [ThreadParser]
-/// from the nga_fetcher_dart library.
+/// from the local nga_fetcher module.
 class NgaRepository {
   NgaRepository({
     required String cookie,

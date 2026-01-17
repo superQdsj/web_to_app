@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nga_fetcher_dart/nga_fetcher_dart.dart';
+import '../src/nga_fetcher.dart';
 
 import '../config/nga_env.dart';
 import '../data/nga_repository.dart';
