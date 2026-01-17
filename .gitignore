@@ -46,7 +46,11 @@ env/
 # Project specific
 out/
 *.log
+
+# Sensitive cookie file (keep local)
 nga_cookie.txt
+
+# Data artifacts
 *.json
 
 # FVM Version Cache

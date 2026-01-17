@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+dart_dir="$root_dir/nga_fetcher_dart"
+default_cookie_file="$root_dir/nga_cookie.txt"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  fetch_dart fid7 [out_dir]
+  fetch_dart fid=<num> [out_dir]
+  fetch_dart tid=<num> [out_dir]
+  fetch_dart t=<num> [out_dir]
+  fetch_dart <tid> [out_dir]
+
+Examples:
+  ./fetch_dart fid7
+  ./fetch_dart fid=7
+  ./fetch_dart tid=45060283
+  ./fetch_dart t=45060283
+  ./fetch_dart 45060283
+  ./fetch_dart 45060283 out/thread_45060283_dart
+
+Notes:
+- Uses: fvm dart run nga_fetcher_dart ...
+- Default cookie file: nga_cookie.txt (gitignored, contains sensitive data)
+- Forum writes: meta.json, threads.json, forum.html
+- Thread writes: thread.json, thread.html
+EOF
+}
+
+if [[ $# -lt 1 ]]; then
+  usage
+  exit 2
+fi
+
+if ! command -v fvm >/dev/null 2>&1; then
+  echo "ERROR: fvm not found in PATH" >&2
+  exit 1
+fi
+
+if [[ ! -d "$dart_dir" ]]; then
+  echo "ERROR: dart project not found: $dart_dir" >&2
+  exit 1
+fi
+
+if [[ ! -f "$default_cookie_file" ]]; then
+  echo "ERROR: cookie file not found: $default_cookie_file" >&2
+  echo "Put your copied cURL (with -b '...') into that file." >&2
+  exit 1
+fi
+
+cmd="$1"
+shift || true
+
+case "$cmd" in
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  fid7)
+    fid="7"
+    out_dir="${1:-out/nga_fid7_dart}"
+    (
+      cd "$dart_dir"
+      fvm dart run nga_fetcher_dart export-forum \
+        --fid "$fid" \
+        --cookie-file "$default_cookie_file" \
+        --out-dir "$root_dir/$out_dir" \
+        --save-html
+    )
+    ;;
+  fid=*)
+    fid="${cmd#fid=}"
+    out_dir="${1:-out/nga_fid${fid}_dart}"
+    (
+      cd "$dart_dir"
+      fvm dart run nga_fetcher_dart export-forum \
+        --fid "$fid" \
+        --cookie-file "$default_cookie_file" \
+        --out-dir "$root_dir/$out_dir" \
+        --save-html
+    )
+    ;;
+  tid=*)
+    tid="${cmd#tid=}"
+    out_dir="${1:-out/thread_${tid}_dart}"
+    (
+      cd "$dart_dir"
+      fvm dart run nga_fetcher_dart export-thread \
+        --tid "$tid" \
+        --cookie-file "$default_cookie_file" \
+        --out-dir "$root_dir/$out_dir" \
+        --save-html
+    )
+    ;;
+  t=*)
+    tid="${cmd#t=}"
+    out_dir="${1:-out/thread_${tid}_dart}"
+    (
+      cd "$dart_dir"
+      fvm dart run nga_fetcher_dart export-thread \
+        --tid "$tid" \
+        --cookie-file "$default_cookie_file" \
+        --out-dir "$root_dir/$out_dir" \
+        --save-html
+    )
+    ;;
+  [0-9]*)
+    tid="$cmd"
+    out_dir="${1:-out/thread_${tid}_dart}"
+    (
+      cd "$dart_dir"
+      fvm dart run nga_fetcher_dart export-thread \
+        --tid "$tid" \
+        --cookie-file "$default_cookie_file" \
+        --out-dir "$root_dir/$out_dir" \
+        --save-html
+    )
+    ;;
+
+  *)
+    echo "ERROR: unknown command: $cmd" >&2
+    usage
+    exit 2
+    ;;
+esac

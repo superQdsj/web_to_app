@@ -2,21 +2,21 @@
 
 ## Project Structure & Module Organization
 
-- `mvp_nga_fetcher/main.py`: main CLI entrypoint (`nga-fetcher`) plus HTML fetching, decoding (GBK/GB18030), and forum thread parsing.
-- `fetch`: convenience wrapper that exports a forum page into `out/` (see examples below).
-- `mvp_nga_fetcher/nga_cookie.txt`: local cookie input file (do not commit secrets).
-- `out/`: generated artifacts (`meta.json`, `threads.json`, optional `forum.html`) and is git-ignored.
+- `nga_fetcher_dart/`: Dart CLI + parsing library.
+- `fetch_dart`: convenience wrapper around the Dart CLI.
+- `nga_cookie.txt`: local cookie input file (sensitive; git-ignored).
+- `out/`: generated artifacts (`meta.json`, `threads.json`, optional `forum.html`/`thread.html`) and is git-ignored.
 
 ## Build, Test, and Development Commands
 
-- Create an environment: `python3 -m venv .venv && source .venv/bin/activate`
-- Install deps: `pip install -r requirements.txt`
-- Configure auth (pick one):
-  - `.env` with `NGA_COOKIE=...` (start from `.env.example`), or
-  - `mvp_nga_fetcher/nga_cookie.txt` containing a `Cookie:` line or copied cURL snippet with `-b '...'`.
-- Export a forum page (recommended): `./fetch fid7` (or `./fetch fid=7 out/nga_custom`)
-- Debug fetch/parse: `python3 mvp_nga_fetcher/main.py fetch "<url>" --json --parse-threads`
-- Serve locally (for quick inspection): `python3 mvp_nga_fetcher/main.py serve "<url>" --port 8080`
+- Ensure `fvm` is installed and Flutter/Dart SDK is set up.
+- Install deps: `cd nga_fetcher_dart && fvm dart pub get`
+- Configure auth:
+  - Put your copied cURL snippet (with `-b '...'`) or a `Cookie:` line into `nga_cookie.txt`.
+- Export forum or thread (recommended):
+  - `./fetch_dart fid7`
+  - `./fetch_dart tid=45060283`
+- Run tests: `cd nga_fetcher_dart && fvm dart test`
 
 ## Coding Style & Naming Conventions
 
