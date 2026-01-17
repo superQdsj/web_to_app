@@ -1,33 +1,3 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual environments
-venv/
-ENV/
-env/
-.venv
 
 # IDE
 .vscode/
@@ -37,8 +7,6 @@ env/
 *~
 .DS_Store
 
-# Linter cache
-.ruff_cache/
 
 # Environment variables (sensitive)
 .env
@@ -47,16 +15,8 @@ env/
 out/
 *.log
 
-# Sensitive cookie file (keep local)
-nga_cookie.txt
-nga_post_curl.txt
-nga_post_all_curl.text
-
 # Private folder for sensitive files
 private/
-
-# Data artifacts
-*.json
 
 # FVM Version Cache
 .fvm/
