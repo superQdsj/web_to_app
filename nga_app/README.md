@@ -1,16 +1,24 @@
-# nga_app
+# NGA App
 
-A new Flutter project.
+基于 Flutter 开发的 NGA 论坛客户端应用。
 
-## Getting Started
+## 功能
 
-This project is a starting point for a Flutter application.
+- WebView 登录获取 Cookie
+- 版面帖子列表浏览
+- 帖子详情阅读
+- GBK/GB18030 编码自动处理
 
-A few resources to get you started if this is your first Flutter project:
+## 快速开始
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+# 安装依赖
+fvm flutter pub get
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# 运行应用
+fvm flutter run
+```
+
+## 详细文档
+
+完整的技术文档请查看 [docs/nga_app.md](../docs/nga_app.md)。
