@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../src/nga_fetcher.dart';
 
-import '../config/nga_env.dart';
+
 import '../data/nga_repository.dart';
 import '../src/auth/nga_cookie_store.dart';
 import 'login_webview_sheet.dart';
@@ -65,8 +65,7 @@ class _ForumScreenState extends State<ForumScreen> {
     if (!NgaCookieStore.hasCookie) {
       setState(() {
         _error = 'Cookie not configured.\n'
-            'Tap the login button in the top-right corner.'
-            '${NgaEnv.hasCookie ? "\n(Compile-time cookie is present but runtime cookie is empty.)" : ""}';
+            'Tap the login button in the top-right corner.';
       });
       return;
     }

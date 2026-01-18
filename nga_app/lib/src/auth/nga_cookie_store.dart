@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart';
 
-import '../../config/nga_env.dart';
-
 class NgaCookieStore {
   NgaCookieStore._();
 
   static final ValueNotifier<String> cookie =
-      ValueNotifier<String>(NgaEnv.cookie.trim());
+      ValueNotifier<String>('');
 
   static bool get hasCookie => cookie.value.trim().isNotEmpty;
 
