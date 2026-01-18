@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../src/nga_fetcher.dart';
 
 import '../config/nga_env.dart';
 import '../data/nga_repository.dart';
+import '../src/auth/nga_cookie_store.dart';
+import 'login_webview_sheet.dart';
 import 'thread_screen.dart';
 
 /// Forum thread list screen.
@@ -22,16 +25,29 @@ class _ForumScreenState extends State<ForumScreen> {
   bool _loading = false;
   String? _error;
 
-  late final NgaRepository _repository;
+  late NgaRepository _repository;
+
+  String get _cookie => NgaCookieStore.cookie.value;
 
   @override
   void initState() {
     super.initState();
-    _repository = NgaRepository(cookie: NgaEnv.cookie);
+    _repository = NgaRepository(cookie: _cookie);
+    NgaCookieStore.cookie.addListener(_onCookieChanged);
+  }
+
+  void _onCookieChanged() {
+    // Recreate repository so subsequent fetches use the latest cookie.
+    _repository.close();
+    _repository = NgaRepository(cookie: _cookie);
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    NgaCookieStore.cookie.removeListener(_onCookieChanged);
     _fidController.dispose();
     _repository.close();
     super.dispose();
@@ -46,10 +62,11 @@ class _ForumScreenState extends State<ForumScreen> {
       return;
     }
 
-    if (!NgaEnv.hasCookie) {
+    if (!NgaCookieStore.hasCookie) {
       setState(() {
         _error = 'Cookie not configured.\n'
-            'Run with: --dart-define-from-file=../private/nga_cookie.json';
+            'Tap the login button in the top-right corner.'
+            '${NgaEnv.hasCookie ? "\n(Compile-time cookie is present but runtime cookie is empty.)" : ""}';
       });
       return;
     }
@@ -59,6 +76,12 @@ class _ForumScreenState extends State<ForumScreen> {
       _error = null;
       _threads.clear();
     });
+
+    if (kDebugMode) {
+      debugPrint('=== [NGA] Fetch forum using cookie (full) ===');
+      debugPrint(_cookie);
+      debugPrint('=== [NGA] Fetch forum cookie len=${_cookie.length} ===');
+    }
 
     try {
       final threads = await _repository.fetchForumThreads(fid);
@@ -75,6 +98,23 @@ class _ForumScreenState extends State<ForumScreen> {
     }
   }
 
+  Future<void> _openLogin() async {
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const LoginWebViewSheet(),
+    );
+
+    if (!mounted) return;
+
+    if (ok == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cookie captured from WebView.')),
+      );
+    }
+  }
+
   void _openThread(ThreadItem thread) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -88,6 +128,15 @@ class _ForumScreenState extends State<ForumScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('NGA Forum'),
+        actions: [
+          IconButton(
+            tooltip: NgaCookieStore.hasCookie ? 'Logged in' : 'Login',
+            onPressed: _openLogin,
+            icon: Icon(
+              NgaCookieStore.hasCookie ? Icons.verified_user : Icons.login,
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [

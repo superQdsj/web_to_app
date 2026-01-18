@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../src/nga_fetcher.dart';
 
-import '../config/nga_env.dart';
 import '../data/nga_repository.dart';
+import '../src/auth/nga_cookie_store.dart';
 
 /// Thread detail screen.
 ///
@@ -26,23 +27,35 @@ class _ThreadScreenState extends State<ThreadScreen> {
   bool _loading = true;
   String? _error;
 
-  late final NgaRepository _repository;
+  late NgaRepository _repository;
+
+  String get _cookie => NgaCookieStore.cookie.value;
 
   @override
   void initState() {
     super.initState();
-    _repository = NgaRepository(cookie: NgaEnv.cookie);
+    _repository = NgaRepository(cookie: _cookie);
+    NgaCookieStore.cookie.addListener(_onCookieChanged);
     _fetchThread();
+  }
+
+  void _onCookieChanged() {
+    _repository.close();
+    _repository = NgaRepository(cookie: _cookie);
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    NgaCookieStore.cookie.removeListener(_onCookieChanged);
     _repository.close();
     super.dispose();
   }
 
   Future<void> _fetchThread() async {
-    if (!NgaEnv.hasCookie) {
+    if (!NgaCookieStore.hasCookie) {
       setState(() {
         _error = 'Cookie not configured.';
         _loading = false;
@@ -54,6 +67,12 @@ class _ThreadScreenState extends State<ThreadScreen> {
       _loading = true;
       _error = null;
     });
+
+    if (kDebugMode) {
+      debugPrint('=== [NGA] Fetch thread using cookie (full) ===');
+      debugPrint(_cookie);
+      debugPrint('=== [NGA] Fetch thread cookie len=${_cookie.length} ===');
+    }
 
     try {
       final detail = await _repository.fetchThread(widget.tid);
