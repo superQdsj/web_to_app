@@ -188,9 +188,4 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
     );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 }
