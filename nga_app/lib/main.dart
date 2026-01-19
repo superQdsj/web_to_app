@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/forum_screen.dart';
+import 'screens/bottom_tab_shell.dart';
 
 void main() {
   runApp(const NgaApp());
@@ -17,7 +17,7 @@ class NgaApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const ForumScreen(),
+      home: const BottomTabShell(),
     );
   }
 }
