@@ -23,7 +23,15 @@ cd nga_app && fvm flutter analyze
 
 # 格式化代码
 cd nga_app && fvm dart format .
+
+# Parallel Development (see docs/development.md)
+./scripts/gwt.sh <branch-name>
 ```
+
+## Parallel Development Policy
+
+- **Worktree builds:** Avoid running `fvm flutter run` in parallel worktrees (build directories are huge).
+- **Validation:** Use IDE syntax checking or `fvm flutter analyze` for verification.
 
 ## Architecture
 

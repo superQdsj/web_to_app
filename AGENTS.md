@@ -13,6 +13,13 @@
 - 运行应用: `cd nga_app && fvm flutter run`
 - 运行测试: `cd nga_app && fvm flutter test`
 - 代码分析: `cd nga_app && fvm flutter analyze`
+- 并行开发: `./scripts/gwt.sh <分支名>` (详见 `docs/development.md`)
+
+## Parallel Development & Build Policy
+
+- **Git Worktree**: 推荐使用 `git worktree` 进行多分支并行开发。
+- **Build Policy**: 由于 `build/` 目录极其庞大且易导致缓存污染，在非主工作区（Worktree）中，**禁止/不建议**执行完整的 `build` 或 `run` 命令进行验证。
+- **Validation**: 仅需通过代码编辑器语法检查和 `fvm flutter analyze` 确保逻辑正确即可。
 
 ## Coding Style & Naming Conventions
 
