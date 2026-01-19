@@ -21,8 +21,16 @@ class NgaRepository {
   /// Fetches the thread list for a given forum (by fid).
   ///
   /// Returns a list of [ThreadItem] parsed from the forum page.
-  Future<List<ThreadItem>> fetchForumThreads(int fid) async {
-    final url = Uri.parse('$_baseUrl/thread.php?fid=$fid');
+  Future<List<ThreadItem>> fetchForumThreads(
+    int fid, {
+    int page = 1,
+  }) async {
+    final url = Uri.parse('$_baseUrl/thread.php').replace(
+      queryParameters: <String, String>{
+        'fid': fid.toString(),
+        if (page > 1) 'page': page.toString(),
+      },
+    );
 
     final resp = await _client.getBytes(
       url,

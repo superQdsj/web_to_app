@@ -19,9 +19,16 @@ class ForumScreen extends StatefulWidget {
 class _ForumScreenState extends State<ForumScreen> {
   final _fidController = TextEditingController(text: '7');
   final _threads = <ThreadItem>[];
+  final _threadIds = <int>{};
+  final _scrollController = ScrollController();
 
   bool _loading = false;
+  bool _loadingMore = false;
+  bool _hasMore = false;
   String? _error;
+
+  int? _activeFid;
+  int _currentPage = 1;
 
   late NgaRepository _repository;
 
@@ -47,6 +54,7 @@ class _ForumScreenState extends State<ForumScreen> {
   void dispose() {
     NgaCookieStore.cookie.removeListener(_onCookieChanged);
     _fidController.dispose();
+    _scrollController.dispose();
     _repository.close();
     super.dispose();
   }
@@ -72,6 +80,10 @@ class _ForumScreenState extends State<ForumScreen> {
       _loading = true;
       _error = null;
       _threads.clear();
+      _threadIds.clear();
+      _activeFid = fid;
+      _currentPage = 1;
+      _hasMore = true;
     });
 
     if (kDebugMode) {
@@ -83,16 +95,58 @@ class _ForumScreenState extends State<ForumScreen> {
     }
 
     try {
-      final threads = await _repository.fetchForumThreads(fid);
+      final threads = await _repository.fetchForumThreads(fid, page: 1);
+      final uniqueThreads = threads
+          .where((t) => _threadIds.add(t.tid))
+          .toList(growable: false);
 
       setState(() {
-        _threads.addAll(threads);
+        _threads.addAll(uniqueThreads);
+        _hasMore = uniqueThreads.isNotEmpty;
         _loading = false;
       });
     } catch (e) {
       setState(() {
         _error = e.toString();
         _loading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchMoreThreads() async {
+    if (_loading || _loadingMore || !_hasMore) {
+      return;
+    }
+    final fid = _activeFid;
+    if (fid == null) {
+      return;
+    }
+
+    setState(() {
+      _loadingMore = true;
+      _error = null;
+    });
+
+    try {
+      final nextPage = _currentPage + 1;
+      final threads = await _repository.fetchForumThreads(fid, page: nextPage);
+      final uniqueThreads = threads
+          .where((t) => _threadIds.add(t.tid))
+          .toList(growable: false);
+
+      setState(() {
+        if (uniqueThreads.isEmpty) {
+          _hasMore = false;
+        } else {
+          _currentPage = nextPage;
+          _threads.addAll(uniqueThreads);
+        }
+        _loadingMore = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loadingMore = false;
       });
     }
   }
@@ -180,16 +234,79 @@ class _ForumScreenState extends State<ForumScreen> {
 
     return RefreshIndicator(
       onRefresh: _fetchThreads,
-      child: ListView.separated(
-        itemCount: _threads.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final thread = _threads[index];
-          return _ThreadTile(
-            thread: thread,
-            onTap: () => _openThread(thread),
-          );
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (!_scrollController.hasClients) {
+            return false;
+          }
+          final position = _scrollController.position;
+          if (!position.hasContentDimensions ||
+              position.maxScrollExtent <= 0 ||
+              position.pixels <= 0) {
+            return false;
+          }
+          const loadMoreThreshold = 200.0;
+          if (position.pixels >= position.maxScrollExtent - loadMoreThreshold) {
+            _fetchMoreThreads();
+          }
+          return false;
         },
+        child: ListView.separated(
+          controller: _scrollController,
+          itemCount: _threads.length + 1,
+          separatorBuilder: (context, index) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            if (index >= _threads.length) {
+              return _buildLoadMoreFooter();
+            }
+            final thread = _threads[index];
+            return _ThreadTile(
+              thread: thread,
+              onTap: () => _openThread(thread),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreFooter() {
+    if (_threads.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (_loadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (!_hasMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: Text(
+            '没有更多了',
+            style: TextStyle(color: Colors.black54),
+          ),
+        ),
+      );
+    }
+
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Text(
+          '上拉加载更多',
+          style: TextStyle(color: Colors.black54),
+        ),
       ),
     );
   }
