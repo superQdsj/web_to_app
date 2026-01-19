@@ -51,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirmed != true) return;
 
     NgaCookieStore.setCookie('');
+    await NgaCookieStore.clearStorage();
     await WebviewCookieManager().clearCookies();
 
     if (!mounted) return;

@@ -71,6 +71,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
     _autoCaptured = true;
     _log('applyCookieAndClose($reason) len=${cookieHeaderValue.length}');
     NgaCookieStore.setCookie(cookieHeaderValue);
+    await NgaCookieStore.saveToStorage();
 
     if (mounted) {
       Navigator.of(context).pop(true);

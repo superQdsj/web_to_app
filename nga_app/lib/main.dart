@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../src/auth/nga_cookie_store.dart';
 import 'screens/bottom_tab_shell.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NgaCookieStore.loadFromStorage();
   runApp(const NgaApp());
 }
 
