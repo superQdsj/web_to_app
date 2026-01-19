@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import '../src/nga_fetcher.dart';
 
 /// Repository for fetching NGA forum data.
@@ -48,9 +47,11 @@ class NgaRepository {
 
   /// Fetches the thread detail for a given thread (by tid).
   ///
-  /// Returns a [ThreadDetail] with the first page of posts.
-  Future<ThreadDetail> fetchThread(int tid) async {
-    final url = Uri.parse('$_baseUrl/read.php?tid=$tid');
+  /// Returns a [ThreadDetail] parsed from the given page of posts.
+  Future<ThreadDetail> fetchThread(int tid, {int page = 1}) async {
+    final url = Uri.parse(
+      '$_baseUrl/read.php',
+    ).replace(queryParameters: <String, String>{'tid': tid.toString(), if (page > 1) 'page': page.toString()});
 
     final resp = await _client.getBytes(
       url,

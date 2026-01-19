@@ -6,8 +6,7 @@ void main() {
   test('Hybrid Parser should extract rich metadata from nga_debug.html', () {
     final file = File('../private/nga_debug.html');
     if (!file.existsSync()) {
-      print('Warning: nga_debug.html not found, skipping test.');
-      return;
+      throw Exception(' nga_debug.html not found, skipping test.');
     }
     final html = file.readAsStringSync();
 

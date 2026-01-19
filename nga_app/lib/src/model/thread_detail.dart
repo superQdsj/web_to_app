@@ -1,5 +1,6 @@
 class ThreadPost {
   ThreadPost({
+    this.pid,
     required this.floor,
     required this.author,
     required this.authorUid,
@@ -7,6 +8,7 @@ class ThreadPost {
     this.deviceType,
   });
 
+  final int? pid;
   final int? floor;
   final ThreadPostAuthor? author;
   final int? authorUid;
@@ -14,6 +16,7 @@ class ThreadPost {
   final String? deviceType;
 
   Map<String, Object?> toJson() => {
+        'pid': pid,
         'floor': floor,
     'author': author?.toJson(),
         'author_uid': authorUid,

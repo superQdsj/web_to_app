@@ -30,9 +30,17 @@ class ThreadScreen extends StatefulWidget {
 }
 
 class _ThreadScreenState extends State<ThreadScreen> {
-  ThreadDetail? _detail;
+  final _posts = <ThreadPost>[];
+  final _postKeys = <String>{};
+  final _scrollController = ScrollController();
+
   bool _loading = true;
+  bool _loadingMore = false;
+  bool _hasMore = true;
   String? _error;
+  String? _loadMoreError;
+
+  int _currentPage = 1;
 
   late NgaRepository _repository;
 
@@ -43,7 +51,7 @@ class _ThreadScreenState extends State<ThreadScreen> {
     super.initState();
     _repository = NgaRepository(cookie: _cookie);
     NgaCookieStore.cookie.addListener(_onCookieChanged);
-    _fetchThread();
+    _refreshThread();
   }
 
   void _onCookieChanged() {
@@ -57,11 +65,34 @@ class _ThreadScreenState extends State<ThreadScreen> {
   @override
   void dispose() {
     NgaCookieStore.cookie.removeListener(_onCookieChanged);
+    _scrollController.dispose();
     _repository.close();
     super.dispose();
   }
 
-  Future<void> _fetchThread() async {
+  Future<void> _refreshThread() async {
+    setState(() {
+      _loading = true;
+      _loadingMore = false;
+      _hasMore = true;
+      _error = null;
+      _loadMoreError = null;
+      _currentPage = 1;
+      _posts.clear();
+      _postKeys.clear();
+    });
+
+    await _fetchThreadPage(1);
+  }
+
+  Future<void> _fetchMoreThread() async {
+    if (_loading || _loadingMore || !_hasMore) {
+      return;
+    }
+    await _fetchThreadPage(_currentPage + 1);
+  }
+
+  Future<void> _fetchThreadPage(int page) async {
     if (!NgaCookieStore.hasCookie) {
       setState(() {
         _error = 'Cookie not configured.';
@@ -70,10 +101,17 @@ class _ThreadScreenState extends State<ThreadScreen> {
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    if (page <= 1) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    } else {
+      setState(() {
+        _loadingMore = true;
+        _loadMoreError = null;
+      });
+    }
 
     if (kDebugMode) {
       debugPrint('=== [NGA] Fetch thread cookie len=${_cookie.length} ===');
@@ -84,18 +122,68 @@ class _ThreadScreenState extends State<ThreadScreen> {
     }
 
     try {
-      final detail = await _repository.fetchThread(widget.tid);
+      final detail = await _repository.fetchThread(
+        widget.tid,
+        page: page,
+      );
+      final uniquePosts = detail.posts
+          .where((post) => _postKeys.add(_threadPostKey(post)))
+          .toList(growable: false);
+
+      if (kDebugMode) {
+        debugPrint(
+          '=== [NGA] Thread tid=${widget.tid} page=$page url=${detail.url} '
+          'posts=${detail.posts.length} unique=${uniquePosts.length} ===',
+        );
+      }
 
       setState(() {
-        _detail = detail;
-        _loading = false;
+        if (page <= 1) {
+          _posts.addAll(uniquePosts);
+          _hasMore = uniquePosts.isNotEmpty;
+          _loading = false;
+        } else {
+          if (uniquePosts.isEmpty) {
+            _hasMore = false;
+          } else {
+            _currentPage = page;
+            _posts.addAll(uniquePosts);
+          }
+          _loadingMore = false;
+        }
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
-        _loading = false;
+        if (page <= 1) {
+          _error = e.toString();
+          _loading = false;
+        } else {
+          _loadMoreError = e.toString();
+          _loadingMore = false;
+        }
       });
     }
+  }
+
+  String _threadPostKey(ThreadPost post) {
+    final pid = post.pid;
+    if (pid != null) {
+      return 'pid:$pid';
+    }
+    final normalized = post.contentText.trim();
+    final uid = post.authorUid ?? post.author?.uid ?? -1;
+    final hash = _fnv1a32(normalized);
+    return 'u:$uid|h:$hash|l:${normalized.length}';
+  }
+
+  int _fnv1a32(String input) {
+    const fnvPrime = 16777619;
+    var hash = 2166136261;
+    for (final unit in input.codeUnits) {
+      hash ^= unit;
+      hash = (hash * fnvPrime) & 0xFFFFFFFF;
+    }
+    return hash;
   }
 
   @override
@@ -138,8 +226,13 @@ class _ThreadScreenState extends State<ThreadScreen> {
       body: _ThreadBody(
         loading: _loading,
         error: _error,
-        detail: _detail,
-        onRefresh: _fetchThread,
+        posts: _posts,
+        scrollController: _scrollController,
+        loadingMore: _loadingMore,
+        hasMore: _hasMore,
+        loadMoreError: _loadMoreError,
+        onRefresh: _refreshThread,
+        onLoadMore: _fetchMoreThread,
       ),
       bottomNavigationBar: const _ReplyComposer(),
     );

@@ -40,20 +40,25 @@ class ThreadParser {
 
     for (var i = 0; i < postRows.length; i++) {
       final row = postRows[i];
-      final floor = i; // Simplified floor index for now, or extract from DOM
+      final authorEl = row.querySelector('[id^=postauthor]');
+      final contentEl = row.querySelector('[id^=postcontent]') ??
+          row.querySelector('.postcontent.ubbcode') ??
+          row.querySelector('.postcontent');
+      final floor = (contentEl != null ? _tryExtractFloor(contentEl) : null) ??
+          (authorEl != null ? _tryExtractFloor(authorEl) : null) ??
+          i;
+      final pid = _extractPidFromPostRow(row);
 
       // Extract UID from author link href
-      final authorLink = row.querySelector('#postauthor$i');
-      final authorUidStr = authorLink?.attributes['href']?.split('uid=').last ?? '';
+      final authorUidStr = authorEl?.attributes['href']?.split('uid=').last ?? '';
       final authorUid = int.tryParse(authorUidStr);
 
       // Extract content
-      final contentEl = row.querySelector('#postcontent$i');
       final contentText = contentEl?.text.trim() ?? '';
       if (contentText.isEmpty && authorUid == null) continue;
 
       // Extract device and other info from postArg.proc script following the table
-      final deviceType = _extractDeviceType(htmlText, i);
+      final deviceType = _extractDeviceType(htmlText, floor);
 
       // Map author metadata
       ThreadPostAuthor? author;
@@ -62,7 +67,16 @@ class ThreadParser {
         author = _mapToThreadPostAuthor(userData, groupsMap);
       }
 
-      posts.add(ThreadPost(floor: floor, author: author, authorUid: authorUid, contentText: contentText, deviceType: deviceType));
+      posts.add(
+        ThreadPost(
+          pid: pid,
+          floor: floor,
+          author: author,
+          authorUid: authorUid,
+          contentText: contentText,
+          deviceType: deviceType,
+        ),
+      );
     }
 
     return ThreadDetail(tid: tid, url: url, fetchedAt: fetchedAt, posts: posts);
@@ -79,6 +93,8 @@ class ThreadParser {
       if (contentText.isEmpty) continue;
 
       final floor = _tryExtractFloor(el);
+      final table = _findClosestTable(el);
+      final pid = table != null ? _extractPidFromPostRow(table) : null;
       Element? authorLink;
       if (floor != null) {
         authorLink = doc.getElementById('postauthor$floor');
@@ -88,6 +104,7 @@ class ThreadParser {
 
       posts.add(
         ThreadPost(
+          pid: pid,
           floor: floor,
           author: null, // Legacy parser doesn't have rich author info
           authorUid: authorUid,
@@ -111,7 +128,7 @@ class ThreadParser {
       try {
         return jsonDecode(jsonStr) as Map<String, dynamic>;
       } catch (e) {
-        print('DEBUG: userInfo jsonDecode failed: $e');
+        // Ignore parsing errors and fall back to empty user info.
       }
     }
     return {};
@@ -222,6 +239,72 @@ class ThreadParser {
     final m = RegExp(r'(\d+)$').firstMatch(id);
     if (m != null) {
       return int.tryParse(m.group(1) ?? '');
+    }
+    return null;
+  }
+
+  int? _extractPidFromPostRow(Element row) {
+    final idMatch = RegExp(r'pid(\d+)');
+    final hrefMatch = RegExp(r'pid=(\d+)');
+    final hashMatch = RegExp(r'#pid(\d+)');
+
+    final rowId = row.id;
+    if (rowId.isNotEmpty) {
+      final m = idMatch.firstMatch(rowId);
+      if (m != null) {
+        return int.tryParse(m.group(1)!);
+      }
+    }
+
+    final rowName = row.attributes['name'];
+    if (rowName != null) {
+      final m = idMatch.firstMatch(rowName);
+      if (m != null) {
+        return int.tryParse(m.group(1)!);
+      }
+    }
+
+    for (final el in row.querySelectorAll('[id], [name]')) {
+      final candidateId = el.id;
+      if (candidateId.isNotEmpty) {
+        final m = idMatch.firstMatch(candidateId);
+        if (m != null) {
+          return int.tryParse(m.group(1)!);
+        }
+      }
+      final candidateName = el.attributes['name'];
+      if (candidateName != null) {
+        final m = idMatch.firstMatch(candidateName);
+        if (m != null) {
+          return int.tryParse(m.group(1)!);
+        }
+      }
+    }
+
+    for (final link in row.querySelectorAll('a')) {
+      final href = link.attributes['href'];
+      if (href == null || href.isEmpty) {
+        continue;
+      }
+      final m = hrefMatch.firstMatch(href);
+      if (m != null) {
+        return int.tryParse(m.group(1)!);
+      }
+      final m2 = hashMatch.firstMatch(href);
+      if (m2 != null) {
+        return int.tryParse(m2.group(1)!);
+      }
+    }
+    return null;
+  }
+
+  Element? _findClosestTable(Element start) {
+    Element? current = start;
+    while (current != null) {
+      if (current.localName == 'table') {
+        return current;
+      }
+      current = current.parent;
     }
     return null;
   }
