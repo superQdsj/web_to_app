@@ -2,38 +2,31 @@
 
 ## Project Structure & Module Organization
 
-- `nga_fetcher_dart/`: Dart CLI + parsing library (current implementation).
-- `scripts/fetch_dart`: convenience wrapper around the Dart CLI that exports into `out/`.
-- `scripts/reply`: reply helper (uses cookie auth).
-- `.env`: local cookie input (sensitive; git-ignored; do not commit secrets).
-- `out/`: generated artifacts (`meta.json`, `threads.json`, optional `forum.html`/`thread.html`) and is git-ignored.
+- `nga_app/`: Flutter 移动端论坛浏览应用。
+- `.env`: 本地 Cookie 输入（敏感信息，已被 git 忽略；请勿提交 secrets）。
+- `out/`: 生成的产物目录（已被 git 忽略）。
 
 ## Build, Test, and Development Commands
 
-- Ensure `fvm` is installed and Flutter/Dart SDK is set up.
-- Install deps: `cd nga_fetcher_dart && fvm dart pub get`
-- Configure auth:
-  - Put your cookie into `.env` as `NGA_COOKIE=...` (supports raw cookie, `Cookie:` header, or cURL snippet with `-b '...'`).
-- Export forum or thread:
-  - `./scripts/fetch_dart fid7`
-  - `./scripts/fetch_dart tid=45060283`
-- Reply (manual check): `./scripts/reply --tid <tid> --fid <fid> --content "text"`
-- Run tests: `cd nga_fetcher_dart && fvm dart test`
+- 确保 `fvm` 已安装并且 Flutter/Dart SDK 已配置。
+- 安装依赖: `cd nga_app && fvm flutter pub get`
+- 运行应用: `cd nga_app && fvm flutter run`
+- 运行测试: `cd nga_app && fvm flutter test`
+- 代码分析: `cd nga_app && fvm flutter analyze`
 
 ## Coding Style & Naming Conventions
 
-- Dart: follow existing style; keep formatting consistent (use `fvm dart format .` if needed).
-- Naming (Dart): `lowerCamelCase` for vars/functions, `UpperCamelCase` for types, `snake_case` for filenames.
-- Keep changes focused: prefer small pure helpers and update `fetch`/CLI help text when user-facing behavior changes.
-- Optional linting (if installed locally): `cd nga_fetcher_dart && fvm dart analyze`
+- Dart: 遵循现有风格，保持格式一致（需要时使用 `fvm dart format .`）。
+- 命名规范 (Dart): 变量/函数使用 `lowerCamelCase`，类型使用 `UpperCamelCase`，文件名使用 `snake_case`。
+- 保持修改专注：优先编写小型纯函数，修改用户可见行为时更新相关帮助文本。
 
 ## Testing Guidelines
 
-- Dart tests live under `nga_fetcher_dart/`; run with `cd nga_fetcher_dart && fvm dart test`.
-- At minimum, include a reproducible manual check in your PR description (exact command + expected files written).
+- Flutter 测试位于 `nga_app/test/`；运行命令: `cd nga_app && fvm flutter test`。
+- 至少在 PR 描述中包含可复现的手动测试步骤（具体命令 + 预期结果）。
 
 ## Commit & Pull Request Guidelines
 
-- No established commit history yet; use Conventional Commits (e.g., `feat: ...`, `fix: ...`, `chore: ...`).
-- PRs should include: intent/summary, how to run (commands), and any parsing/compatibility notes.
-- Never commit secrets: cookie headers or copied cURL snippets; redact `Cookie` values in logs and screenshots.
+- 使用 Conventional Commits 格式（如 `feat: ...`、`fix: ...`、`chore: ...`）。
+- PR 应包含：目的/摘要、运行方式（命令）、以及任何解析/兼容性注意事项。
+- 永远不要提交 secrets：Cookie headers 或复制的 cURL 片段；在日志和截图中隐藏 `Cookie` 值。

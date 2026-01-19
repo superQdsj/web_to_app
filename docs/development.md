@@ -18,9 +18,6 @@ dart pub global activate fvm
 # 项目根目录执行，自动下载指定的 Flutter 版本
 fvm install
 
-# CLI 工具依赖
-cd nga_fetcher_dart && fvm dart pub get
-
 # Flutter 应用依赖
 cd nga_app && fvm flutter pub get
 ```
@@ -38,53 +35,28 @@ cd nga_app && fvm flutter pub get
 ### 格式化代码
 
 ```bash
-# Dart CLI 项目
-cd nga_fetcher_dart && fvm dart format .
-
-# Flutter 应用
 cd nga_app && fvm dart format .
 ```
 
 ### 静态分析
 
 ```bash
-# Dart CLI 项目
-cd nga_fetcher_dart && fvm dart analyze
-
-# Flutter 应用
 cd nga_app && fvm flutter analyze
 ```
 
 ## 测试
 
-### 运行 CLI 工具测试
+### 运行 Flutter 应用测试
 
 ```bash
-cd nga_fetcher_dart && fvm dart test
+cd nga_app && fvm flutter test
 ```
 
-### 手动测试 CLI
+### 手动测试
 
-确保 `.env` 文件已配置有效的 `NGA_COOKIE`，然后：
-
-```bash
-# 测试版面抓取
-./scripts/fetch_dart fid=7
-
-# 测试帖子抓取
-./scripts/fetch_dart tid=45060283
-
-# 测试回帖功能
-./scripts/reply --tid <tid> --fid <fid> --content "测试回复"
-```
-
-### 输出验证
-
-抓取结果保存在 `out/` 目录：
-
-- `meta.json` - 请求元数据
-- `threads.json` - 版面帖子列表
-- `thread.json` - 单个帖子详情
+1. 运行应用: `cd nga_app && fvm flutter run`
+2. 点击登录按钮，通过 WebView 完成登录
+3. 验证版面列表和帖子详情页面正常加载
 
 ## 提交规范
 
@@ -107,22 +79,12 @@ docs: 补充 API 文档
 
 ### Cookie 无效
 
-**现象**：只能抓取前几页或无法回复
+**现象**：无法正常浏览需要登录的内容
 
-**解决**：重新从浏览器获取最新 Cookie，更新 `.env` 文件
-
-### 请求超时
-
-**现象**：抓取时长时间无响应
-
-**解决**：增加 `--timeout` 参数值（默认 30 秒）
-
-```bash
-./scripts/fetch_dart fid=7 --timeout 60
-```
+**解决**：重新通过 WebView 登录获取新的 Cookie
 
 ### 编码乱码
 
 **现象**：帖子内容显示乱码
 
-**解决**：检查 `codec/` 模块的解码逻辑，确保 GBK 降级正常工作
+**解决**：检查编码解码逻辑，确保 GBK 降级正常工作

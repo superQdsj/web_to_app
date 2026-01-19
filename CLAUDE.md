@@ -4,59 +4,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NGA Fetcher is a Dart CLI tool for scraping [NGA Forum](https://bbs.nga.cn) content. It exports forum thread lists and thread details as structured JSON, with support for CLI-based replies and offline HTML parsing.
+NGA App 是一个用于浏览 [NGA 论坛](https://bbs.nga.cn) 的 Flutter 移动应用。支持通过 WebView 登录获取 Cookie，浏览版面帖子列表和帖子详情。
 
 ## Common Commands
 
 ```bash
-# Install dependencies
-cd nga_fetcher_dart && fvm dart pub get
+# 安装依赖
+cd nga_app && fvm flutter pub get
 
-# Run tests
-cd nga_fetcher_dart && fvm dart test
+# 运行应用
+cd nga_app && fvm flutter run
 
-# Run linting/analysis
-cd nga_fetcher_dart && fvm dart analyze
+# 运行测试
+cd nga_app && fvm flutter test
 
-# Format code
-cd nga_fetcher_dart && fvm dart format .
-```
+# 运行代码分析
+cd nga_app && fvm flutter analyze
 
-## Running the Tool
-
-**Prerequisites:**
-- `fvm` (Flutter Version Manager) installed
-- Cookie configured via `.env` (`NGA_COOKIE=...`) or environment variable
-
-**Usage via wrapper scripts:**
-```bash
-# Export forum (fid=7 is water forum)
-./scripts/fetch_dart fid7
-./scripts/fetch_dart fid=390
-
-# Export thread
-./scripts/fetch_dart tid=45060283
-
-# Reply to thread
-./scripts/reply --tid 45960168 --fid -444012 --content "回复内容"
+# 格式化代码
+cd nga_app && fvm dart format .
 ```
 
 ## Architecture
 
 ```
-nga_fetcher_dart/
-├── bin/nga_fetcher_dart.dart    # CLI entry point, argument parsing
-├── lib/src/
-│   ├── codec/                   # GBK/GB18030/UTF-8 encoding handling
-│   ├── cookie/                  # Cookie parsing (cURL/Header/Raw formats)
-│   ├── http/                    # HTTP client wrapper with cookie/timeout
-│   ├── model/                   # Data classes (ThreadItem, ThreadDetail)
-│   ├── parser/                  # HTML parsers (ForumParser, ThreadParser)
-│   └── util/                    # Utilities
-└── test/                        # Dart tests
+nga_app/
+├── lib/
+│   ├── main.dart                # 应用入口
+│   ├── screens/                 # 页面
+│   │   ├── forum_screen.dart    # 版面帖子列表
+│   │   └── thread_screen.dart   # 帖子详情
+│   ├── widgets/                 # 可复用组件
+│   ├── services/                # 服务层 (HTTP, Cookie 管理)
+│   └── models/                  # 数据模型
+├── test/                        # 测试文件
+└── pubspec.yaml                 # 依赖配置
 ```
-
-**Data flow:** CLI → HTTP client → NGA server → Codec (encoding) → Parser (HTML) → Models → JSON output
 
 ## Key Conventions
 
@@ -64,9 +47,10 @@ nga_fetcher_dart/
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `chore:`)
 - **Secrets:** Never commit cookies; use `private/` folder (git-ignored)
 
-## Output Format
+## Authentication
 
-Results saved to `out/`:
-- `meta.json` - URL, status, timestamp, thread count
-- `threads.json` - Thread list (tid, title, author, replies, etc.)
-- `thread.json` - Thread with all posts (floor, author, content_text)
+应用使用 WebView 实现登录，从 WebView Cookie 中提取：
+- `ngaPassportUid` - 用户 ID
+- `ngaPassportCid` / Token - 登录令牌
+
+登录后 Cookie 自动保存，用于后续 API 请求认证。
