@@ -1,5 +1,8 @@
 PODS:
   - Flutter (1.0.0)
+  - shared_preferences_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - webview_cookie_manager_plus (0.0.1):
     - Flutter
   - webview_flutter_wkwebview (0.0.1):
@@ -8,12 +11,15 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - webview_cookie_manager_plus (from `.symlinks/plugins/webview_cookie_manager_plus/ios`)
   - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  shared_preferences_foundation:
+    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   webview_cookie_manager_plus:
     :path: ".symlinks/plugins/webview_cookie_manager_plus/ios"
   webview_flutter_wkwebview:
@@ -21,6 +27,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
   webview_cookie_manager_plus: bb56cf9e53c086a22a2aa033ec6ce374da3095b6
   webview_flutter_wkwebview: 29eb20d43355b48fe7d07113835b9128f84e3af4
 
