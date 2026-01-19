@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_cookie_manager_plus/webview_cookie_manager_plus.dart';
 
 import '../src/auth/nga_cookie_store.dart';
+import '../src/auth/nga_user_store.dart';
 import 'login_webview_sheet.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -52,6 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     NgaCookieStore.setCookie('');
     await NgaCookieStore.clearStorage();
+    NgaUserStore.clear();
     await WebviewCookieManager().clearCookies();
 
     if (!mounted) return;
@@ -73,6 +75,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           _StatusCard(theme: theme),
+          const SizedBox(height: 12),
+          const _UserCard(),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _openLogin,
@@ -153,6 +157,83 @@ class _StatusCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       loggedIn ? 'Cookie 长度：$cookieLength' : '请先完成登录。',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _UserCard extends StatelessWidget {
+  const _UserCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ValueListenableBuilder<NgaUserInfo?>(
+      valueListenable: NgaUserStore.user,
+      builder: (context, user, _) {
+        if (user == null) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: theme.colorScheme.surfaceContainerHighest,
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Text(
+              '未获取到用户信息（登录成功后自动填充）。',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: theme.colorScheme.surfaceContainerHighest,
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: theme.colorScheme.primaryContainer,
+                foregroundImage:
+                    user.avatarUrl == null ? null : NetworkImage(user.avatarUrl!),
+                child: user.avatarUrl == null
+                    ? Icon(
+                        Icons.person,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.username,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'UID: ${user.uid}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

@@ -23,6 +23,7 @@ nga_app/lib/
 └── src/
     ├── auth/                 # 认证模块
     │   └── nga_cookie_store.dart  # Cookie 存储
+    │   └── nga_user_store.dart    # 用户信息（登录成功后捕获）
     ├── http/                 # HTTP 客户端
     ├── codec/                # 编码解码 (GBK/UTF-8)
     ├── model/                # 数据模型
@@ -63,6 +64,11 @@ final cookieHeader = cookies
     .join('; ');
 NgaCookieStore.setCookie(cookieHeader);
 ```
+
+### 用户信息捕获
+
+登录页在成功后通常会通过 `console.log("loginSuccess : {...}")` 输出用户信息（如 `uid/username/avatar`）。
+App 会在 WebView 内注入一个非常窄的 hook，仅用于提取该 JSON 并保存到 `NgaUserStore`（不打印明文、也不依赖 `document.cookie`）。
 
 ### 编码处理
 

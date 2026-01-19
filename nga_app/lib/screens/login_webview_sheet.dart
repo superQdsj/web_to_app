@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import '../src/auth/nga_cookie_store.dart';
+import '../src/auth/nga_user_store.dart';
 
 class LoginWebViewSheet extends StatefulWidget {
   const LoginWebViewSheet({super.key});
@@ -29,6 +31,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
   String? _error;
   bool _detectedLoginCookie = false;
   bool _autoCaptured = false;
+  bool _capturedUserInfo = false;
 
   static const Duration _autoCaptureDelay = Duration(milliseconds: 300);
 
@@ -127,12 +130,71 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
     }
   }
 
+  Future<void> _injectLoginSuccessHook() async {
+    // NGA 登录页在成功后会 `console.log("loginSuccess : {...}")` 输出用户信息。
+    // 这里注入一个非常窄的 hook：只在首次检测到 loginSuccess 时，把 JSON 透传给 Flutter。
+    try {
+      await _controller.runJavaScript('''
+(function () {
+  if (window.__ngaLoginSuccessHookInstalled) return;
+  window.__ngaLoginSuccessHookInstalled = true;
+
+  var originalLog = console.log;
+  console.log = function () {
+    try {
+      for (var i = 0; i < arguments.length; i++) {
+        var arg = arguments[i];
+        if (typeof arg !== 'string') continue;
+        if (arg.indexOf('loginSuccess') === -1) continue;
+        var start = arg.indexOf('{');
+        var end = arg.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+          NGA_LOGIN_SUCCESS.postMessage(arg.substring(start, end + 1));
+          break;
+        }
+      }
+    } catch (e) {}
+    if (originalLog) originalLog.apply(console, arguments);
+  };
+})();
+''');
+    } catch (e) {
+      _log('inject loginSuccess hook failed: $e');
+    }
+  }
+
+  void _onLoginSuccessJson(String jsonText) {
+    if (_capturedUserInfo) return;
+
+    try {
+      final decoded = jsonDecode(jsonText);
+      final userInfo = NgaUserInfo.tryFromLoginSuccessJson(decoded);
+      if (userInfo == null) return;
+
+      _capturedUserInfo = true;
+      NgaUserStore.setUser(userInfo);
+
+      if (kDebugMode) {
+        _log('captured userInfo uid=${userInfo.uid} username=${userInfo.username}');
+      }
+
+      // 作为兜底：如果导航回调没有捕捉到 `login_set_cookie_quick`，这里也触发一次 cookie 探测。
+      _tryAutoCapture(reason: 'jsLoginSuccess');
+    } catch (e) {
+      _log('parse loginSuccess json failed: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'NGA_LOGIN_SUCCESS',
+        onMessageReceived: (message) => _onLoginSuccessJson(message.message),
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
@@ -147,6 +209,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
               _currentUrl = url;
             });
             _probeCookieReady(reason: 'pageFinished');
+            _injectLoginSuccessHook();
           },
           onNavigationRequest: (request) {
             // 关键点：NGA 登录常见实现是触发一个“设置 Cookie”的异步请求（iframe/xhr），
