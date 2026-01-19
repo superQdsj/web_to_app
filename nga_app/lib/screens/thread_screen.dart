@@ -166,7 +166,7 @@ class _PostTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final floorLabel = post.floor != null ? '#${post.floor}' : '#${index + 1}';
-    final authorLabel = post.author ?? 'Anonymous';
+    final authorLabel = post.author?.username ?? 'Anonymous';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
