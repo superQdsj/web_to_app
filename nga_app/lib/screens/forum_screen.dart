@@ -6,17 +6,18 @@ import '../data/nga_repository.dart';
 import '../src/auth/nga_cookie_store.dart';
 import 'thread_screen.dart';
 
-/// Forum thread list screen.
+/// Forum content widget (embeddable).
 ///
-/// Allows user to input a forum ID (fid) and fetch the thread list.
-class ForumScreen extends StatefulWidget {
-  const ForumScreen({super.key});
+/// Displays forum thread list. Allows user to input a forum ID (fid)
+/// and fetch the thread list. Designed to be embedded within a Scaffold.
+class ForumContent extends StatefulWidget {
+  const ForumContent({super.key});
 
   @override
-  State<ForumScreen> createState() => _ForumScreenState();
+  State<ForumContent> createState() => _ForumContentState();
 }
 
-class _ForumScreenState extends State<ForumScreen> {
+class _ForumContentState extends State<ForumContent> {
   final _fidController = TextEditingController(text: '7');
   final _threads = <ThreadItem>[];
   final _threadIds = <int>{};
@@ -71,7 +72,7 @@ class _ForumScreenState extends State<ForumScreen> {
     if (!NgaCookieStore.hasCookie) {
       setState(() {
         _error = 'Cookie not configured.\n'
-            '请到「个人」页完成登录。';
+            '请点击右上角头像完成登录。';
       });
       return;
     }
@@ -161,17 +162,12 @@ class _ForumScreenState extends State<ForumScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('NGA Forum'),
-      ),
-      body: Column(
-        children: [
-          _buildInputBar(),
-          if (_error != null) _buildErrorBanner(),
-          Expanded(child: _buildBody()),
-        ],
-      ),
+    return Column(
+      children: [
+        _buildInputBar(),
+        if (_error != null) _buildErrorBanner(),
+        Expanded(child: _buildBody()),
+      ],
     );
   }
 

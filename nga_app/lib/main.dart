@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../src/auth/nga_cookie_store.dart';
-import 'screens/bottom_tab_shell.dart';
+import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +20,7 @@ class NgaApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const BottomTabShell(),
+      home: const HomeScreen(),
     );
   }
 }
