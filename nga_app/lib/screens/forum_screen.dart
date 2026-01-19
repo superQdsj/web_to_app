@@ -75,9 +75,11 @@ class _ForumScreenState extends State<ForumScreen> {
     });
 
     if (kDebugMode) {
-      debugPrint('=== [NGA] Fetch forum using cookie (full) ===');
-      debugPrint(_cookie);
       debugPrint('=== [NGA] Fetch forum cookie len=${_cookie.length} ===');
+      debugPrint(
+        '=== [NGA] Fetch forum cookie cookies: '
+        '${NgaCookieStore.summarizeCookieHeader(_cookie)} ===',
+      );
     }
 
     try {

@@ -56,6 +56,8 @@ cd nga_app && fvm flutter test
 
 1. 运行应用: `cd nga_app && fvm flutter run`
 2. 点击登录按钮，通过 WebView 完成登录
+   - 正常情况下会自动捕获 Cookie 并自动返回
+   - 若未自动返回，可点击 **Use Login** 手动兜底
 3. 验证版面列表和帖子详情页面正常加载
 
 ## 提交规范

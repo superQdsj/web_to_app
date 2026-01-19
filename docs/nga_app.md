@@ -49,9 +49,11 @@ nga_app/lib/
 
 1. 用户点击登录按钮，弹出 `LoginWebViewSheet`
 2. WebView 加载 NGA 登录页面
-3. 用户完成登录后，点击 **Use Login** 按钮
-4. 应用通过 `WebviewCookieManager` 提取 Cookie
-5. Cookie 存储到 `NgaCookieStore` 供后续请求使用
+3. 用户完成登录后，WebView 内部会发起 `login_set_cookie_quick` 等请求写入 Cookie（常为 iframe/xhr，主页面不一定跳转）
+4. App 监听到该请求后，延迟片刻（等待 Cookie 落盘）并通过 `WebviewCookieManager` 主动读取 Cookie
+5. Cookie 存储到 `NgaCookieStore` 供后续请求使用，登录页自动关闭
+
+> 仍保留 **Use Login** 按钮作为兜底：当自动捕获失败时，可手动触发一次 Cookie 读取。
 
 ```dart
 // 关键代码 - 捕获 Cookie

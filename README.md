@@ -45,7 +45,7 @@ cd nga_app && fvm flutter pub get
 cd nga_app && fvm flutter run
 ```
 
-应用启动后，点击右上角登录按钮，通过 WebView 完成登录即可自动获取 Cookie。
+应用启动后，进入「个人」页点击登录按钮，通过 WebView 完成登录即可自动获取 Cookie（正常情况下会自动捕获并返回；也可点 **Use Login** 手动兜底）。
 
 ## 开发指南
 

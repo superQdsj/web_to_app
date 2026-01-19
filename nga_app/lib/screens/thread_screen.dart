@@ -69,9 +69,11 @@ class _ThreadScreenState extends State<ThreadScreen> {
     });
 
     if (kDebugMode) {
-      debugPrint('=== [NGA] Fetch thread using cookie (full) ===');
-      debugPrint(_cookie);
       debugPrint('=== [NGA] Fetch thread cookie len=${_cookie.length} ===');
+      debugPrint(
+        '=== [NGA] Fetch thread cookie cookies: '
+        '${NgaCookieStore.summarizeCookieHeader(_cookie)} ===',
+      );
     }
 
     try {
