@@ -5,7 +5,6 @@ import 'package:webview_cookie_manager_plus/webview_cookie_manager_plus.dart';
 import '../../src/auth/nga_cookie_store.dart';
 import '../../src/auth/nga_user_store.dart';
 import '../login_webview_sheet.dart';
-import '../profile_screen.dart';
 
 /// A premium, redesigned right-side drawer for user profile management.
 class ProfileDrawer extends StatefulWidget {
@@ -121,7 +120,8 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                         title: '个人详情',
                         onTap: () {
                           Navigator.of(context).pop();
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+                          // TODO: 添加个人详情页.
+
                         },
                       ),
                       ValueListenableBuilder<String>(
