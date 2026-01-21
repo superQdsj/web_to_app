@@ -1,51 +1,25 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../src/nga_forum_store.dart';
-
-/// A forum board representation.
-class ForumBoard {
-  final String name;
-  final int fid;
-
-  const ForumBoard(this.name, this.fid);
-}
-
-/// 版块分类数据
-class _ForumCategories {
-  const _ForumCategories._();
-
-  static const wowBoards = [
-    ForumBoard('艾泽拉斯议事厅', 7),
-    ForumBoard('职业讨论区', 181),
-    ForumBoard('冒险心得', 218),
-    ForumBoard('镶金玫瑰', 254),
-  ];
-
-  static const gameBoards = [
-    ForumBoard('游戏综合讨论', 414),
-    ForumBoard('英雄联盟', -152678),
-    ForumBoard('绝地求生', 568),
-    ForumBoard('怪物猎人', 489),
-  ];
-
-  static const chatBoards = [
-    ForumBoard('网事杂谈', -7),
-    ForumBoard('晴风村', -7955747),
-    ForumBoard('大时代', 706),
-    ForumBoard('漩涡书院', 524),
-  ];
-
-  static const blizzardBoards = [
-    ForumBoard('守望先锋', 459),
-    ForumBoard('炉石传说', 422),
-    ForumBoard('暗黑破坏神3', 318),
-    ForumBoard('风暴英雄', 431),
-  ];
-}
+import '../../src/model/forum_category.dart';
+import '../../src/services/forum_category_service.dart';
 
 /// A premium, redesigned left-side drawer for forum navigation and shortcuts.
-class MenuDrawer extends StatelessWidget {
+class MenuDrawer extends StatefulWidget {
   const MenuDrawer({super.key});
+
+  @override
+  State<MenuDrawer> createState() => _MenuDrawerState();
+}
+
+class _MenuDrawerState extends State<MenuDrawer> {
+  late Future<List<ForumCategory>> _categoriesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoriesFuture = ForumCategoryService.loadCategories();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,41 +81,56 @@ class MenuDrawer extends StatelessWidget {
               children: [
                 _buildHeader(context),
                 Expanded(
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    children: [
-                      const SizedBox(height: 10),
-                      _buildQuickActionsGrid(context),
-                      const SizedBox(height: 32),
-                      _buildSectionLabel(context, 'DISCOVER'),
-                      const SizedBox(height: 12),
-                      _buildForumCategory(
-                        context,
-                        icon: Icons.auto_awesome_rounded,
-                        title: '魔兽世界',
-                        boards: _ForumCategories.wowBoards,
-                      ),
-                      _buildForumCategory(
-                        context,
-                        icon: Icons.sports_esports_rounded,
-                        title: '游戏专版',
-                        boards: _ForumCategories.gameBoards,
-                      ),
-                      _buildForumCategory(
-                        context,
-                        icon: Icons.chat_bubble_outline_rounded,
-                        title: '网事杂谈',
-                        boards: _ForumCategories.chatBoards,
-                      ),
-                      _buildForumCategory(
-                        context,
-                        icon: Icons.shield_rounded,
-                        title: '暴雪游戏',
-                        boards: _ForumCategories.blizzardBoards,
-                      ),
-                      const SizedBox(height: 40),
-                    ],
+                  child: FutureBuilder<List<ForumCategory>>(
+                    future: _categoriesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 48),
+                                const SizedBox(height: 16),
+                                Text(
+                                  '加载失败',
+                                  style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.error),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  snapshot.error.toString(),
+                                  style: theme.textTheme.bodySmall,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      final categories = snapshot.data ?? [];
+
+                      return ListView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        children: [
+                          const SizedBox(height: 10),
+                          _buildQuickActionsGrid(context),
+                          const SizedBox(height: 32),
+                          _buildSectionLabel(context, 'DISCOVER'),
+                          const SizedBox(height: 12),
+                          ...categories.map((category) => _buildForumCategory(context, category)),
+                          const SizedBox(height: 40),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 _buildFooter(context),
@@ -278,9 +267,10 @@ class MenuDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildForumCategory(BuildContext context, {required IconData icon, required String title, required List<ForumBoard> boards}) {
+  Widget _buildForumCategory(BuildContext context, ForumCategory category) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final icon = ForumCategoryService.getIcon(category.icon);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -303,7 +293,7 @@ class MenuDrawer extends StatelessWidget {
             child: Icon(icon, color: colorScheme.primary.withValues(alpha: 0.8), size: 20),
           ),
           title: Text(
-            title,
+            category.name,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               fontSize: 16,
@@ -313,10 +303,33 @@ class MenuDrawer extends StatelessWidget {
           iconColor: colorScheme.primary,
           collapsedIconColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          children: boards.map((board) => _buildBoardItem(context, board)).toList(),
+          children: _buildSubcategories(context, category),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildSubcategories(BuildContext context, ForumCategory category) {
+    if (category.subcategories.length == 1 && category.subcategories.first.name == '主版块') {
+      return category.subcategories.first.boards.map((board) => _buildBoardItem(context, board)).toList();
+    }
+
+    return category.subcategories.map((sub) {
+      return Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          title: Text(
+            sub.name,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+          childrenPadding: const EdgeInsets.only(left: 8),
+          children: sub.boards.map((board) => _buildBoardItem(context, board)).toList(),
+        ),
+      );
+    }).toList();
   }
 
   Widget _buildBoardItem(BuildContext context, ForumBoard board) {
