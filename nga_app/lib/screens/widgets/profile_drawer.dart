@@ -68,7 +68,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
 
     NgaCookieStore.setCookie('');
     await NgaCookieStore.clearStorage();
-    NgaUserStore.clear();
+    await NgaUserStore.clear();
     await WebviewCookieManager().clearCookies();
 
     if (!mounted) return;

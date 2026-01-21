@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
@@ -172,7 +173,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
       if (userInfo == null) return;
 
       _capturedUserInfo = true;
-      NgaUserStore.setUser(userInfo);
+      unawaited(NgaUserStore.setUser(userInfo));
 
       if (kDebugMode) {
         _log(
