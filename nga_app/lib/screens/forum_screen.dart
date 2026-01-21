@@ -91,7 +91,8 @@ class _ForumContentState extends State<ForumContent> {
 
     if (!NgaCookieStore.hasCookie) {
       setState(() {
-        _error = 'Cookie not configured.\n'
+        _error =
+            'Cookie not configured.\n'
             '请点击右上角头像完成登录。';
       });
       return;
@@ -195,10 +196,7 @@ class _ForumContentState extends State<ForumContent> {
       width: double.infinity,
       color: Colors.red.shade100,
       padding: const EdgeInsets.all(12),
-      child: Text(
-        _error!,
-        style: TextStyle(color: Colors.red.shade900),
-      ),
+      child: Text(_error!, style: TextStyle(color: Colors.red.shade900)),
     );
   }
 
@@ -208,9 +206,7 @@ class _ForumContentState extends State<ForumContent> {
     }
 
     if (_threads.isEmpty) {
-      return const Center(
-        child: Text('暂无内容，选择版块后会显示主题列表。'),
-      );
+      return const Center(child: Text('暂无内容，选择版块后会显示主题列表。'));
     }
 
     return RefreshIndicator(
@@ -275,7 +271,9 @@ class _ForumContentState extends State<ForumContent> {
         child: Center(
           child: Text(
             '没有更多了',
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -286,7 +284,9 @@ class _ForumContentState extends State<ForumContent> {
       child: Center(
         child: Text(
           '上拉加载更多',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
@@ -294,10 +294,7 @@ class _ForumContentState extends State<ForumContent> {
 }
 
 class _ThreadTile extends StatelessWidget {
-  const _ThreadTile({
-    required this.thread,
-    required this.onTap,
-  });
+  const _ThreadTile({required this.thread, required this.onTap});
 
   final ThreadItem thread;
   final VoidCallback onTap;
@@ -305,11 +302,7 @@ class _ThreadTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text(
-        thread.title,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(thread.title, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: Text(
         '${thread.author ?? 'Unknown'} | Replies: ${thread.replies ?? 0}',
         style: Theme.of(context).textTheme.bodySmall,

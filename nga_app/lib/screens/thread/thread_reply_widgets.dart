@@ -1,9 +1,7 @@
 part of '../thread_screen.dart';
 
 class _ReplyCard extends StatelessWidget {
-  const _ReplyCard({
-    required this.post,
-  });
+  const _ReplyCard({required this.post});
 
   final ThreadPost post;
 
@@ -31,45 +29,43 @@ class _ReplyCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            authorLabel,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: _ThreadPalette.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Flexible(
+                      child: Text(
+                        authorLabel,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: _ThreadPalette.textPrimary,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          timeLabel,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: _ThreadPalette.textSecondary,
-                          ),
-                        ),
-                      ],
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(width: 6),
                     Text(
-                      post.contentText,
+                      timeLabel,
                       style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.5,
-                        color: _ThreadPalette.textPrimary,
+                        fontSize: 12,
+                        color: _ThreadPalette.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
+              // Post date in top-right corner
+              if (post.postDate != null) _PostDateDisplay(date: post.postDate!),
             ],
+          ),
+          const SizedBox(height: 4),
+          // Content
+          Text(
+            post.contentText,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: _ThreadPalette.textPrimary,
+            ),
           ),
           const SizedBox(height: 8),
           const _ReplyActionsRow(alignEnd: true),
@@ -80,9 +76,7 @@ class _ReplyCard extends StatelessWidget {
 }
 
 class _ReplyTile extends StatelessWidget {
-  const _ReplyTile({
-    required this.post,
-  });
+  const _ReplyTile({required this.post});
 
   final ThreadPost post;
 
@@ -93,20 +87,21 @@ class _ReplyTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _UserAvatar(
-            name: authorLabel,
-            avatarUrl: post.author?.avatar,
-            size: 40,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          // Header row with avatar, author info, and post date
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _UserAvatar(
+                name: authorLabel,
+                avatarUrl: post.author?.avatar,
+                size: 40,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Row(
                   children: [
                     Flexible(
                       child: Text(
@@ -129,20 +124,23 @@ class _ReplyTile extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  post.contentText,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: _ThreadPalette.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const _ReplyActionsRow(),
-              ],
+              ),
+              // Post date in top-right corner
+              if (post.postDate != null) _PostDateDisplay(date: post.postDate!),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Content
+          Text(
+            post.contentText,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: _ThreadPalette.textPrimary,
             ),
           ),
+          const SizedBox(height: 8),
+          const _ReplyActionsRow(),
         ],
       ),
     );
@@ -150,9 +148,7 @@ class _ReplyTile extends StatelessWidget {
 }
 
 class _ReplyActionsRow extends StatelessWidget {
-  const _ReplyActionsRow({
-    this.alignEnd = false,
-  });
+  const _ReplyActionsRow({this.alignEnd = false});
 
   final bool alignEnd;
 
@@ -173,10 +169,7 @@ class _ReplyActionsRow extends StatelessWidget {
       return content;
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [content],
-    );
+    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [content]);
   }
 }
 
@@ -210,4 +203,3 @@ class _InlineAction extends StatelessWidget {
     );
   }
 }
-

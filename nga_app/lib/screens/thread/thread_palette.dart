@@ -16,6 +16,7 @@ class _ThreadPalette {
   // 主要文字颜色 #10273f
   static const Color textPrimary = Color(0xFF10273F);
   static const Color textSecondary = Color(0xFF5C4D32);
+  // 第三级文字颜色（时间戳等辅助信息）
+  static const Color textTertiary = Color(0xFF8A7B5A);
   static const Color primary = Color(0xFF1337EC);
 }
-

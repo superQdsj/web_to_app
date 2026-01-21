@@ -42,10 +42,7 @@ class _ThreadBody extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: onRefresh,
-                child: const Text('Retry'),
-              ),
+              ElevatedButton(onPressed: onRefresh, child: const Text('Retry')),
             ],
           ),
         ),
@@ -116,9 +113,7 @@ class _ThreadBody extends StatelessWidget {
                 color: _ThreadPalette.borderLight,
               ),
               const SizedBox(height: 8),
-              _SectionHeader(
-                title: 'All Replies (${replies.length})',
-              ),
+              _SectionHeader(title: 'All Replies (${replies.length})'),
               const SizedBox(height: 4),
               ...replies.map((post) => _ReplyTile(post: post)),
             ],
@@ -171,10 +166,7 @@ class _ThreadBody extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: onLoadMore,
-              child: const Text('Retry'),
-            ),
+            OutlinedButton(onPressed: onLoadMore, child: const Text('Retry')),
           ],
         ),
       );
@@ -184,10 +176,7 @@ class _ThreadBody extends StatelessWidget {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
         child: Center(
-          child: Text(
-            '没有更多了',
-            style: TextStyle(color: Colors.black54),
-          ),
+          child: Text('没有更多了', style: TextStyle(color: Colors.black54)),
         ),
       );
     }
@@ -195,10 +184,7 @@ class _ThreadBody extends StatelessWidget {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 16),
       child: Center(
-        child: Text(
-          '上拉加载更多',
-          style: TextStyle(color: Colors.black54),
-        ),
+        child: Text('上拉加载更多', style: TextStyle(color: Colors.black54)),
       ),
     );
   }

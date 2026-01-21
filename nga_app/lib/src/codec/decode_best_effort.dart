@@ -38,8 +38,10 @@ class DecodeBestEffort {
 
   static String? _parseCharsetFromContentType(String? contentType) {
     if (contentType == null) return null;
-    final m = RegExp(r'charset\s*=\s*([^;\s]+)', caseSensitive: false)
-        .firstMatch(contentType);
+    final m = RegExp(
+      r'charset\s*=\s*([^;\s]+)',
+      caseSensitive: false,
+    ).firstMatch(contentType);
     return m?.group(1);
   }
 
@@ -47,9 +49,10 @@ class DecodeBestEffort {
     if (htmlPreview == null || htmlPreview.isEmpty) return null;
 
     // Handles: <meta http-equiv='Content-Type' content='text/html; charset=GBK'>
-    final m = RegExp(r'charset\s*=\s*([A-Za-z0-9_\-]+)',
-            caseSensitive: false)
-        .firstMatch(htmlPreview);
+    final m = RegExp(
+      r'charset\s*=\s*([A-Za-z0-9_\-]+)',
+      caseSensitive: false,
+    ).firstMatch(htmlPreview);
     return m?.group(1);
   }
 }

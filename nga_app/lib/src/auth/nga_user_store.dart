@@ -33,8 +33,9 @@ class NgaUserInfo {
 class NgaUserStore {
   NgaUserStore._();
 
-  static final ValueNotifier<NgaUserInfo?> user =
-      ValueNotifier<NgaUserInfo?>(null);
+  static final ValueNotifier<NgaUserInfo?> user = ValueNotifier<NgaUserInfo?>(
+    null,
+  );
 
   static bool get hasUser => user.value != null;
 

@@ -6,45 +6,57 @@ import '../model/forum_category.dart';
 
 class ForumCategoryService {
   static List<ForumCategory>? _cachedCategories;
-  
+
   /// 加载所有板块分类
   static Future<List<ForumCategory>> loadCategories() async {
     if (_cachedCategories != null) {
       if (kDebugMode) {
-        debugPrint('[ForumCategoryService] Returning cached categories (${_cachedCategories!.length} items)');
+        debugPrint(
+          '[ForumCategoryService] Returning cached categories (${_cachedCategories!.length} items)',
+        );
       }
       return _cachedCategories!;
     }
-    
+
     try {
       if (kDebugMode) {
         debugPrint('[ForumCategoryService] Loading categories from assets...');
       }
-      
-      final jsonString = await rootBundle.loadString('assets/data/forum_categories.json');
-      
+
+      final jsonString = await rootBundle.loadString(
+        'assets/data/forum_categories.json',
+      );
+
       if (kDebugMode) {
-        debugPrint('[ForumCategoryService] JSON loaded, length: ${jsonString.length} chars');
+        debugPrint(
+          '[ForumCategoryService] JSON loaded, length: ${jsonString.length} chars',
+        );
       }
-      
+
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
-      
+
       if (kDebugMode) {
         final categoriesRaw = json['categories'] as List<dynamic>?;
-        debugPrint('[ForumCategoryService] Found ${categoriesRaw?.length ?? 0} raw categories to parse');
+        debugPrint(
+          '[ForumCategoryService] Found ${categoriesRaw?.length ?? 0} raw categories to parse',
+        );
       }
-      
+
       final categories = (json['categories'] as List<dynamic>)
           .map((e) => ForumCategory.fromJson(e as Map<String, dynamic>))
           .toList();
-      
+
       if (kDebugMode) {
-        debugPrint('[ForumCategoryService] Successfully parsed ${categories.length} categories');
+        debugPrint(
+          '[ForumCategoryService] Successfully parsed ${categories.length} categories',
+        );
         for (final cat in categories) {
-          debugPrint('[ForumCategoryService]   - ${cat.name}: ${cat.subcategories.length} subcategories');
+          debugPrint(
+            '[ForumCategoryService]   - ${cat.name}: ${cat.subcategories.length} subcategories',
+          );
         }
       }
-      
+
       _cachedCategories = categories;
       return categories;
     } catch (e, stackTrace) {
@@ -53,7 +65,7 @@ class ForumCategoryService {
       rethrow;
     }
   }
-  
+
   /// 获取图标（根据字符串名称）
   static IconData getIcon(String iconName) {
     switch (iconName) {
@@ -74,4 +86,3 @@ class ForumCategoryService {
     }
   }
 }
-

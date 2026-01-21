@@ -27,10 +27,18 @@ class ThreadParser {
   }
 
   /// New hybrid parser using Regex + JSON + DOM
-  ThreadDetail parseHybrid(String htmlText, {required int tid, required String url, required int fetchedAt}) {
+  ThreadDetail parseHybrid(
+    String htmlText, {
+    required int tid,
+    required String url,
+    required int fetchedAt,
+  }) {
     // 1. Extract metadata via Regex
     final userInfoMap = _extractUserInfo(htmlText);
-    final groupsMap = userInfoMap['__GROUPS'] as Map<String, dynamic>? ?? _extractGroups(htmlText);
+
+    final groupsMap =
+        userInfoMap['__GROUPS'] as Map<String, dynamic>? ??
+        _extractGroups(htmlText);
 
     final doc = html_parser.parse(htmlText);
 
@@ -41,16 +49,19 @@ class ThreadParser {
     for (var i = 0; i < postRows.length; i++) {
       final row = postRows[i];
       final authorEl = row.querySelector('[id^=postauthor]');
-      final contentEl = row.querySelector('[id^=postcontent]') ??
+      final contentEl =
+          row.querySelector('[id^=postcontent]') ??
           row.querySelector('.postcontent.ubbcode') ??
           row.querySelector('.postcontent');
-      final floor = (contentEl != null ? _tryExtractFloor(contentEl) : null) ??
+      final floor =
+          (contentEl != null ? _tryExtractFloor(contentEl) : null) ??
           (authorEl != null ? _tryExtractFloor(authorEl) : null) ??
           i;
       final pid = _extractPidFromPostRow(row);
 
       // Extract UID from author link href
-      final authorUidStr = authorEl?.attributes['href']?.split('uid=').last ?? '';
+      final authorUidStr =
+          authorEl?.attributes['href']?.split('uid=').last ?? '';
       final authorUid = int.tryParse(authorUidStr);
 
       // Extract content
@@ -63,9 +74,14 @@ class ThreadParser {
       // Map author metadata
       ThreadPostAuthor? author;
       if (authorUid != null && userInfoMap.containsKey(authorUid.toString())) {
-        final userData = userInfoMap[authorUid.toString()] as Map<String, dynamic>;
+        final userData =
+            userInfoMap[authorUid.toString()] as Map<String, dynamic>;
         author = _mapToThreadPostAuthor(userData, groupsMap);
       }
+
+      // Extract post date (reply time)
+      final postDateEl = row.querySelector('[id^=postdate]');
+      final postDate = postDateEl?.text.trim();
 
       posts.add(
         ThreadPost(
@@ -75,6 +91,7 @@ class ThreadParser {
           authorUid: authorUid,
           contentText: contentText,
           deviceType: deviceType,
+          postDate: postDate,
         ),
       );
     }
@@ -82,10 +99,17 @@ class ThreadParser {
     return ThreadDetail(tid: tid, url: url, fetchedAt: fetchedAt, posts: posts);
   }
 
-  ThreadDetail _parseLegacy(String htmlText, {required int tid, required String url, required int fetchedAt}) {
+  ThreadDetail _parseLegacy(
+    String htmlText, {
+    required int tid,
+    required String url,
+    required int fetchedAt,
+  }) {
     final doc = html_parser.parse(htmlText);
     final preferred = doc.querySelectorAll('.postcontent.ubbcode');
-    final candidates = preferred.isNotEmpty ? preferred : doc.querySelectorAll('.postcontent');
+    final candidates = preferred.isNotEmpty
+        ? preferred
+        : doc.querySelectorAll('.postcontent');
 
     final posts = <ThreadPost>[];
     for (final el in candidates) {
@@ -100,7 +124,12 @@ class ThreadParser {
         authorLink = doc.getElementById('postauthor$floor');
       }
 
-      final authorUid = extractUidFromHref(authorLink?.attributes['href'] ?? '');
+      final authorUid = extractUidFromHref(
+        authorLink?.attributes['href'] ?? '',
+      );
+
+      // In legacy parser, try to find postdate
+      final postDate = table?.querySelector('[id^=postdate]')?.text.trim();
 
       posts.add(
         ThreadPost(
@@ -109,6 +138,7 @@ class ThreadParser {
           author: null, // Legacy parser doesn't have rich author info
           authorUid: authorUid,
           contentText: contentText,
+          postDate: postDate,
         ),
       );
     }
@@ -120,8 +150,14 @@ class ThreadParser {
     // commonui.userInfo.setAll( { ... } )
     // Use the markers if available, otherwise fallback to greedy match within the function call
     final match =
-        RegExp(r'commonui\.userInfo\.setAll\(\s*({.*})\s*\)\s*;?\s*//userinfoend', dotAll: true).firstMatch(html) ??
-        RegExp(r'commonui\.userInfo\.setAll\(\s*({.*})\s*\)', dotAll: true).firstMatch(html);
+        RegExp(
+          r'commonui\.userInfo\.setAll\(\s*({.*})\s*\)\s*;?\s*//userinfoend',
+          dotAll: true,
+        ).firstMatch(html) ??
+        RegExp(
+          r'commonui\.userInfo\.setAll\(\s*({.*})\s*\)',
+          dotAll: true,
+        ).firstMatch(html);
 
     if (match != null) {
       final jsonStr = _cleanJson(match.group(1)!);
@@ -136,7 +172,10 @@ class ThreadParser {
 
   Map<String, dynamic> _extractGroups(String html) {
     // "__GROUPS": { ... }
-    final match = RegExp(r'"__GROUPS"\s*:\s*({.*?})\s*[,}]', dotAll: true).firstMatch(html);
+    final match = RegExp(
+      r'"__GROUPS"\s*:\s*({.*?})\s*[,}]',
+      dotAll: true,
+    ).firstMatch(html);
     if (match != null) {
       final jsonStr = _cleanJson(match.group(1)!);
       try {
@@ -169,7 +208,10 @@ class ThreadParser {
     return null;
   }
 
-  ThreadPostAuthor _mapToThreadPostAuthor(Map<String, dynamic> data, Map<String, dynamic> groups) {
+  ThreadPostAuthor _mapToThreadPostAuthor(
+    Map<String, dynamic> data,
+    Map<String, dynamic> groups,
+  ) {
     final memberId = data['memberid']?.toString();
     final groupData = groups[memberId] as Map<String, dynamic>?;
     final groupName = groupData?['0'] as String?;

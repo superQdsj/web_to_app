@@ -11,9 +11,7 @@ class _ReplyComposer extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: const BoxDecoration(
           color: _ThreadPalette.backgroundLight,
-          border: Border(
-            top: BorderSide(color: _ThreadPalette.borderLight),
-          ),
+          border: Border(top: BorderSide(color: _ThreadPalette.borderLight)),
         ),
         child: Row(
           children: [
@@ -65,4 +63,3 @@ class _ReplyComposer extends StatelessWidget {
     );
   }
 }
-

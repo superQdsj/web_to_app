@@ -28,10 +28,7 @@ class NgaTypography {
   /// 创建暗色主题的 TextTheme
   static TextTheme get darkTextTheme {
     const darkText = Color(0xFFE8E0D0);
-    return _baseTextTheme.apply(
-      bodyColor: darkText,
-      displayColor: darkText,
-    );
+    return _baseTextTheme.apply(bodyColor: darkText, displayColor: darkText);
   }
 
   /// 基础字体配置
@@ -153,53 +150,53 @@ class NgaPostTextStyles {
 
   /// 帖子内容文字 (论坛特色: 较大行高，易读)
   static TextStyle postContent({Color? color}) => TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-        height: 1.7,
-        letterSpacing: 0.3,
-        color: color ?? NgaTypography._textColor,
-      );
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    height: 1.7,
+    letterSpacing: 0.3,
+    color: color ?? NgaTypography._textColor,
+  );
 
   /// 引用块文字
   static TextStyle quote({Color? color}) => TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        fontStyle: FontStyle.italic,
-        height: 1.6,
-        color: color ?? NgaTypography._textSecondary,
-      );
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    fontStyle: FontStyle.italic,
+    height: 1.6,
+    color: color ?? NgaTypography._textSecondary,
+  );
 
   /// 代码块文字 (等宽字体)
   static TextStyle code({Color? color}) => TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w400,
-        fontFamily: 'monospace',
-        height: 1.5,
-        letterSpacing: 0,
-        color: color ?? NgaTypography._textColor,
-      );
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    fontFamily: 'monospace',
+    height: 1.5,
+    letterSpacing: 0,
+    color: color ?? NgaTypography._textColor,
+  );
 
   /// 用户名文字
   static TextStyle username({Color? color}) => TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        height: 1.4,
-        color: color ?? NgaTypography._textColor,
-      );
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+    color: color ?? NgaTypography._textColor,
+  );
 
   /// 时间戳/元信息
   static TextStyle meta({Color? color}) => TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        height: 1.4,
-        color: color ?? NgaTypography._textSecondary,
-      );
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    color: color ?? NgaTypography._textSecondary,
+  );
 
   /// 楼层号
   static TextStyle floorNumber({Color? color}) => TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        height: 1.4,
-        color: color ?? NgaTypography._textSecondary,
-      );
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+    color: color ?? NgaTypography._textSecondary,
+  );
 }

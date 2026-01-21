@@ -4,8 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class NgaCookieStore {
   NgaCookieStore._();
 
-  static final ValueNotifier<String> cookie =
-      ValueNotifier<String>('');
+  static final ValueNotifier<String> cookie = ValueNotifier<String>('');
 
   static const String _storageKey = 'nga_cookies';
 
@@ -32,14 +31,17 @@ class NgaCookieStore {
     return summaries.join(', ');
   }
 
-
   static void setCookie(String newCookie) {
     final trimmed = newCookie.trim();
 
     if (kDebugMode) {
-      debugPrint('=== [NGA] NgaCookieStore.setCookie len=${trimmed.length} ===');
-      debugPrint('=== [NGA] NgaCookieStore.setCookie cookies: '
-          '${summarizeCookieHeader(trimmed)} ===');
+      debugPrint(
+        '=== [NGA] NgaCookieStore.setCookie len=${trimmed.length} ===',
+      );
+      debugPrint(
+        '=== [NGA] NgaCookieStore.setCookie cookies: '
+        '${summarizeCookieHeader(trimmed)} ===',
+      );
     }
 
     cookie.value = trimmed;

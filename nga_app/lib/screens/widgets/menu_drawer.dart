@@ -35,20 +35,24 @@ class _MenuDrawerState extends State<MenuDrawer> {
         children: [
           // Background layers for "Liquid Glass" effect
           Positioned.fill(
-            child: Container(
-              color: colorScheme.surface.withValues(alpha: 0.6),
-            ),
+            child: Container(color: colorScheme.surface.withValues(alpha: 0.6)),
           ),
           // Subtle glow spots
           Positioned(
             top: -100,
             right: -50,
-            child: _GlowSpot(color: colorScheme.primary.withValues(alpha: 0.15), size: 300),
+            child: _GlowSpot(
+              color: colorScheme.primary.withValues(alpha: 0.15),
+              size: 300,
+            ),
           ),
           Positioned(
             bottom: 50,
             left: -100,
-            child: _GlowSpot(color: colorScheme.secondary.withValues(alpha: 0.1), size: 400),
+            child: _GlowSpot(
+              color: colorScheme.secondary.withValues(alpha: 0.1),
+              size: 400,
+            ),
           ),
           // Backdrop Blur
           Positioned.fill(
@@ -85,9 +89,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                     future: _categoriesFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       if (snapshot.hasError) {
@@ -97,11 +99,17 @@ class _MenuDrawerState extends State<MenuDrawer> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.error_outline_rounded, color: colorScheme.error, size: 48),
+                                Icon(
+                                  Icons.error_outline_rounded,
+                                  color: colorScheme.error,
+                                  size: 48,
+                                ),
                                 const SizedBox(height: 16),
                                 Text(
                                   '加载失败',
-                                  style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.error),
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: colorScheme.error,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -126,7 +134,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
                           const SizedBox(height: 32),
                           _buildSectionLabel(context, 'DISCOVER'),
                           const SizedBox(height: 12),
-                          ...categories.map((category) => _buildForumCategory(context, category)),
+                          ...categories.map(
+                            (category) =>
+                                _buildForumCategory(context, category),
+                          ),
                           const SizedBox(height: 40),
                         ],
                       );
@@ -171,7 +182,11 @@ class _MenuDrawerState extends State<MenuDrawer> {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.explore_rounded, color: Colors.white, size: 28),
+                child: const Icon(
+                  Icons.explore_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Column(
@@ -205,16 +220,46 @@ class _MenuDrawerState extends State<MenuDrawer> {
   Widget _buildQuickActionsGrid(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _buildActionCard(context, Icons.bookmark_rounded, '收藏', Colors.orange, '收藏功能开发中')),
+        Expanded(
+          child: _buildActionCard(
+            context,
+            Icons.bookmark_rounded,
+            '收藏',
+            Colors.orange,
+            '收藏功能开发中',
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _buildActionCard(context, Icons.history_rounded, '历史', Colors.blue, '历史功能开发中')),
+        Expanded(
+          child: _buildActionCard(
+            context,
+            Icons.history_rounded,
+            '历史',
+            Colors.blue,
+            '历史功能开发中',
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: _buildActionCard(context, Icons.mail_rounded, '消息', Colors.purple, '消息功能开发中')),
+        Expanded(
+          child: _buildActionCard(
+            context,
+            Icons.mail_rounded,
+            '消息',
+            Colors.purple,
+            '消息功能开发中',
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildActionCard(BuildContext context, IconData icon, String label, Color accentColor, String tooltip) {
+  Widget _buildActionCard(
+    BuildContext context,
+    IconData icon,
+    String label,
+    Color accentColor,
+    String tooltip,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -222,14 +267,20 @@ class _MenuDrawerState extends State<MenuDrawer> {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.1), width: 1),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(tooltip), duration: const Duration(seconds: 1)),
+              SnackBar(
+                content: Text(tooltip),
+                duration: const Duration(seconds: 1),
+              ),
             );
           },
           borderRadius: BorderRadius.circular(20),
@@ -259,7 +310,9 @@ class _MenuDrawerState extends State<MenuDrawer> {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
           letterSpacing: 2,
           fontWeight: FontWeight.bold,
         ),
@@ -277,20 +330,30 @@ class _MenuDrawerState extends State<MenuDrawer> {
       decoration: BoxDecoration(
         color: colorScheme.surface.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.05)),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.05),
+        ),
       ),
       child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: colorScheme.primary.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: colorScheme.primary.withValues(alpha: 0.8), size: 20),
+            child: Icon(
+              icon,
+              color: colorScheme.primary.withValues(alpha: 0.8),
+              size: 20,
+            ),
           ),
           title: Text(
             category.name,
@@ -301,7 +364,9 @@ class _MenuDrawerState extends State<MenuDrawer> {
             ),
           ),
           iconColor: colorScheme.primary,
-          collapsedIconColor: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          collapsedIconColor: colorScheme.onSurfaceVariant.withValues(
+            alpha: 0.5,
+          ),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           children: _buildSubcategories(context, category),
         ),
@@ -309,9 +374,15 @@ class _MenuDrawerState extends State<MenuDrawer> {
     );
   }
 
-  List<Widget> _buildSubcategories(BuildContext context, ForumCategory category) {
-    if (category.subcategories.length == 1 && category.subcategories.first.name == '主版块') {
-      return category.subcategories.first.boards.map((board) => _buildBoardItem(context, board)).toList();
+  List<Widget> _buildSubcategories(
+    BuildContext context,
+    ForumCategory category,
+  ) {
+    if (category.subcategories.length == 1 &&
+        category.subcategories.first.name == '主版块') {
+      return category.subcategories.first.boards
+          .map((board) => _buildBoardItem(context, board))
+          .toList();
     }
 
     return category.subcategories.map((sub) {
@@ -322,11 +393,15 @@ class _MenuDrawerState extends State<MenuDrawer> {
             sub.name,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           childrenPadding: const EdgeInsets.only(left: 8),
-          children: sub.boards.map((board) => _buildBoardItem(context, board)).toList(),
+          children: sub.boards
+              .map((board) => _buildBoardItem(context, board))
+              .toList(),
         ),
       );
     }).toList();
@@ -345,7 +420,9 @@ class _MenuDrawerState extends State<MenuDrawer> {
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.only(bottom: 4),
           decoration: BoxDecoration(
-            color: isActive ? colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
+            color: isActive
+                ? colorScheme.primary.withValues(alpha: 0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Material(
@@ -357,7 +434,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
               },
               borderRadius: BorderRadius.circular(12),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     AnimatedContainer(
@@ -374,15 +454,29 @@ class _MenuDrawerState extends State<MenuDrawer> {
                       child: Text(
                         board.name,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isActive ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.8),
-                          fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                          color: isActive
+                              ? colorScheme.primary
+                              : colorScheme.onSurface.withValues(alpha: 0.8),
+                          fontWeight: isActive
+                              ? FontWeight.w700
+                              : FontWeight.w400,
                         ),
                       ),
                     ),
                     if (isActive)
-                      Icon(Icons.check_circle_rounded, size: 14, color: colorScheme.primary)
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 14,
+                        color: colorScheme.primary,
+                      )
                     else
-                      Icon(Icons.arrow_forward_ios_rounded, size: 12, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 12,
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.2,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -399,14 +493,22 @@ class _MenuDrawerState extends State<MenuDrawer> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.1))),
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.1),
+          ),
+        ),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 18,
             backgroundColor: colorScheme.primaryContainer,
-            child: Icon(Icons.person_outline_rounded, size: 20, color: colorScheme.onPrimaryContainer),
+            child: Icon(
+              Icons.person_outline_rounded,
+              size: 20,
+              color: colorScheme.onPrimaryContainer,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -416,11 +518,15 @@ class _MenuDrawerState extends State<MenuDrawer> {
               children: [
                 Text(
                   '未登录',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   '点击开启完整体验',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -428,10 +534,16 @@ class _MenuDrawerState extends State<MenuDrawer> {
           IconButton(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('设置功能开发中'), duration: Duration(seconds: 1)),
+                const SnackBar(
+                  content: Text('设置功能开发中'),
+                  duration: Duration(seconds: 1),
+                ),
               );
             },
-            icon: Icon(Icons.settings_outlined, color: colorScheme.onSurfaceVariant),
+            icon: Icon(
+              Icons.settings_outlined,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -453,11 +565,7 @@ class _GlowSpot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: color,
-            blurRadius: size / 2,
-            spreadRadius: size / 4,
-          ),
+          BoxShadow(color: color, blurRadius: size / 2, spreadRadius: size / 4),
         ],
       ),
     );

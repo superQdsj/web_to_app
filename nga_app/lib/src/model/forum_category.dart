@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
+import 'package:flutter/foundation.dart' show debugPrint;
 
 /// 板块信息
 class ForumBoard {
@@ -15,9 +15,6 @@ class ForumBoard {
   });
 
   factory ForumBoard.fromJson(Map<String, dynamic> json) {
-    if (kDebugMode) {
-      debugPrint('[ForumBoard.fromJson] Parsing board: ${json.toString().substring(0, json.toString().length.clamp(0, 200))}');
-    }
     try {
       final board = ForumBoard(
         fid: _parseRequiredInt(json['fid']),
@@ -25,9 +22,6 @@ class ForumBoard {
         info: _parseNullableString(json['info']),
         stid: _parseNullableInt(json['stid']),
       );
-      if (kDebugMode) {
-        debugPrint('[ForumBoard.fromJson] Successfully parsed board: ${board.name} (fid: ${board.fid})');
-      }
       return board;
     } catch (e, stackTrace) {
       debugPrint('[ForumBoard.fromJson] ERROR parsing board: $e');
@@ -43,15 +37,9 @@ class ForumSubcategory {
   final String name;
   final List<ForumBoard> boards;
 
-  const ForumSubcategory({
-    required this.name,
-    required this.boards,
-  });
+  const ForumSubcategory({required this.name, required this.boards});
 
   factory ForumSubcategory.fromJson(Map<String, dynamic> json) {
-    if (kDebugMode) {
-      debugPrint('[ForumSubcategory.fromJson] Parsing subcategory: ${json['name']}');
-    }
     try {
       final subcategory = ForumSubcategory(
         name: _parseRequiredString(json['name']),
@@ -59,9 +47,6 @@ class ForumSubcategory {
             .map((e) => ForumBoard.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
-      if (kDebugMode) {
-        debugPrint('[ForumSubcategory.fromJson] Successfully parsed subcategory: ${subcategory.name} with ${subcategory.boards.length} boards');
-      }
       return subcategory;
     } catch (e, stackTrace) {
       debugPrint('[ForumSubcategory.fromJson] ERROR parsing subcategory: $e');
@@ -87,9 +72,6 @@ class ForumCategory {
   });
 
   factory ForumCategory.fromJson(Map<String, dynamic> json) {
-    if (kDebugMode) {
-      debugPrint('[ForumCategory.fromJson] Parsing category: ${json['name']} (id: ${json['id']})');
-    }
     try {
       final category = ForumCategory(
         id: _parseRequiredString(json['id']),
@@ -99,9 +81,6 @@ class ForumCategory {
             .map((e) => ForumSubcategory.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
-      if (kDebugMode) {
-        debugPrint('[ForumCategory.fromJson] Successfully parsed category: ${category.name} with ${category.subcategories.length} subcategories');
-      }
       return category;
     } catch (e, stackTrace) {
       debugPrint('[ForumCategory.fromJson] ERROR parsing category: $e');
@@ -124,8 +103,12 @@ int _parseRequiredInt(dynamic value) {
     final parsed = int.tryParse(value);
     if (parsed != null) return parsed;
   }
-  debugPrint('[_parseRequiredInt] Invalid int value: $value (type: ${value.runtimeType})');
-  throw FormatException('Invalid int value: $value (type: ${value.runtimeType})');
+  debugPrint(
+    '[_parseRequiredInt] Invalid int value: $value (type: ${value.runtimeType})',
+  );
+  throw FormatException(
+    'Invalid int value: $value (type: ${value.runtimeType})',
+  );
 }
 
 /// 解析可选的整数值
@@ -142,7 +125,9 @@ int? _parseNullableInt(dynamic value) {
   if (value is String) {
     return int.tryParse(value);
   }
-  debugPrint('[_parseNullableInt] Unexpected type for nullable int: $value (type: ${value.runtimeType})');
+  debugPrint(
+    '[_parseNullableInt] Unexpected type for nullable int: $value (type: ${value.runtimeType})',
+  );
   return null;
 }
 
@@ -156,7 +141,6 @@ String _parseRequiredString(dynamic value) {
     return value;
   }
   // 将其他类型（如 int）转换为字符串
-  debugPrint('[_parseRequiredString] Converting non-string value to string: $value (type: ${value.runtimeType})');
   return value.toString();
 }
 
@@ -169,6 +153,5 @@ String? _parseNullableString(dynamic value) {
     return value;
   }
   // 将其他类型（如 int）转换为字符串
-  debugPrint('[_parseNullableString] Converting non-string value to string: $value (type: ${value.runtimeType})');
   return value.toString();
 }

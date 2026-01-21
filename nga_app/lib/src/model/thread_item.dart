@@ -20,13 +20,13 @@ class ThreadItem {
   final String? lastReplyer;
 
   Map<String, Object?> toJson() => {
-        'tid': tid,
-        'url': url,
-        'title': title,
-        'replies': replies,
-        'author': author,
-        'author_uid': authorUid,
-        'post_ts': postTs,
-        'last_replyer': lastReplyer,
-      };
+    'tid': tid,
+    'url': url,
+    'title': title,
+    'replies': replies,
+    'author': author,
+    'author_uid': authorUid,
+    'post_ts': postTs,
+    'last_replyer': lastReplyer,
+  };
 }

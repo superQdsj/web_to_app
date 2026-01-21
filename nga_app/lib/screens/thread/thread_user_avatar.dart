@@ -1,11 +1,7 @@
 part of '../thread_screen.dart';
 
 class _UserAvatar extends StatelessWidget {
-  const _UserAvatar({
-    required this.name,
-    required this.size,
-    this.avatarUrl,
-  });
+  const _UserAvatar({required this.name, required this.size, this.avatarUrl});
 
   final String name;
   final double size;
@@ -34,4 +30,3 @@ class _UserAvatar extends StatelessWidget {
     );
   }
 }
-

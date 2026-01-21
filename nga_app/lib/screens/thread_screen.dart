@@ -16,11 +16,7 @@ part 'thread/thread_user_avatar.dart';
 ///
 /// Displays the posts (first page) of a thread.
 class ThreadScreen extends StatefulWidget {
-  const ThreadScreen({
-    super.key,
-    required this.tid,
-    this.title,
-  });
+  const ThreadScreen({super.key, required this.tid, this.title});
 
   final int tid;
   final String? title;
@@ -122,10 +118,7 @@ class _ThreadScreenState extends State<ThreadScreen> {
     }
 
     try {
-      final detail = await _repository.fetchThread(
-        widget.tid,
-        page: page,
-      );
+      final detail = await _repository.fetchThread(widget.tid, page: page);
       final uniquePosts = detail.posts
           .where((post) => _postKeys.add(_threadPostKey(post)))
           .toList(growable: false);

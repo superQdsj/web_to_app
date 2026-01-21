@@ -6,6 +6,7 @@ class ThreadPost {
     required this.authorUid,
     required this.contentText,
     this.deviceType,
+    this.postDate,
   });
 
   final int? pid;
@@ -14,14 +15,16 @@ class ThreadPost {
   final int? authorUid;
   final String contentText;
   final String? deviceType;
+  final String? postDate;
 
   Map<String, Object?> toJson() => {
-        'pid': pid,
-        'floor': floor,
+    'pid': pid,
+    'floor': floor,
     'author': author?.toJson(),
-        'author_uid': authorUid,
-        'content_text': contentText,
+    'author_uid': authorUid,
+    'content_text': contentText,
     'device_type': deviceType,
+    'post_date': postDate,
   };
 }
 
@@ -109,7 +112,7 @@ class WowCharacter {
     'achievement_points': achievementPoints,
     'gender': gender,
     'class_id': classId,
-      };
+  };
 }
 
 class ThreadDetail {
@@ -126,9 +129,9 @@ class ThreadDetail {
   final List<ThreadPost> posts;
 
   Map<String, Object?> toJson() => {
-        'tid': tid,
-        'url': url,
-        'fetched_at': fetchedAt,
-        'posts': posts.map((p) => p.toJson()).toList(),
-      };
+    'tid': tid,
+    'url': url,
+    'fetched_at': fetchedAt,
+    'posts': posts.map((p) => p.toJson()).toList(),
+  };
 }

@@ -27,7 +27,9 @@ class ForumParser {
 
       final authorLink = row.querySelector('a.author');
       final author = authorLink?.text.trim();
-      final authorUid = extractUidFromHref(authorLink?.attributes['href'] ?? '');
+      final authorUid = extractUidFromHref(
+        authorLink?.attributes['href'] ?? '',
+      );
 
       final postTs = tryParseInt(row.querySelector('span.postdate')?.text);
       final lastReplyer = row.querySelector('span.replyer')?.text.trim();

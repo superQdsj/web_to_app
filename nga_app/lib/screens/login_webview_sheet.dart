@@ -175,7 +175,9 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
       NgaUserStore.setUser(userInfo);
 
       if (kDebugMode) {
-        _log('captured userInfo uid=${userInfo.uid} username=${userInfo.username}');
+        _log(
+          'captured userInfo uid=${userInfo.uid} username=${userInfo.username}',
+        );
       }
 
       // 作为兜底：如果导航回调没有捕捉到 `login_set_cookie_quick`，这里也触发一次 cookie 探测。
@@ -282,8 +284,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
                 child: Stack(
                   children: [
                     WebViewWidget(controller: _controller),
-                    if (_loading)
-                      const LinearProgressIndicator(minHeight: 2),
+                    if (_loading) const LinearProgressIndicator(minHeight: 2),
                   ],
                 ),
               ),
@@ -348,11 +349,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       color: Colors.red.shade50,
-      child: Text(
-        _error!,
-        style: TextStyle(color: Colors.red.shade800),
-      ),
+      child: Text(_error!, style: TextStyle(color: Colors.red.shade800)),
     );
   }
-
 }

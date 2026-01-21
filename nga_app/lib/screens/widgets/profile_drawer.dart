@@ -33,7 +33,9 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
         SnackBar(
           content: const Text('🎉 登录成功'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -74,7 +76,10 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
     Navigator.of(context).pop();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('已退出登录'), behavior: SnackBarBehavior.floating),
+      const SnackBar(
+        content: Text('已退出登录'),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -97,7 +102,14 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: colorScheme.surface.withValues(alpha: 0.85),
-                    border: Border(left: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.3), width: 1)),
+                    border: Border(
+                      left: BorderSide(
+                        color: colorScheme.outlineVariant.withValues(
+                          alpha: 0.3,
+                        ),
+                        width: 1,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -111,7 +123,10 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                 const Divider(height: 1, indent: 20, endIndent: 20),
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 16,
+                    ),
                     children: [
                       _buildSectionTitle(context, '账户'),
                       _buildMenuItem(
@@ -121,7 +136,6 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                         onTap: () {
                           Navigator.of(context).pop();
                           // TODO: 添加个人详情页.
-
                         },
                       ),
                       ValueListenableBuilder<String>(
@@ -194,7 +208,11 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: (isLoggedIn ? colorScheme.primary : colorScheme.outline).withValues(alpha: 0.2),
+                      color:
+                          (isLoggedIn
+                                  ? colorScheme.primary
+                                  : colorScheme.outline)
+                              .withValues(alpha: 0.2),
                       blurRadius: 20,
                       spreadRadius: 5,
                     ),
@@ -206,10 +224,14 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                   child: CircleAvatar(
                     radius: 38,
                     backgroundColor: colorScheme.primaryContainer,
-                    foregroundImage: user?.avatarUrl != null ? NetworkImage(user!.avatarUrl!) : null,
+                    foregroundImage: user?.avatarUrl != null
+                        ? NetworkImage(user!.avatarUrl!)
+                        : null,
                     child: user?.avatarUrl == null
                         ? Icon(
-                            isLoggedIn ? Icons.person_rounded : Icons.person_add_rounded,
+                            isLoggedIn
+                                ? Icons.person_rounded
+                                : Icons.person_add_rounded,
                             size: 32,
                             color: colorScheme.onPrimaryContainer,
                           )
@@ -221,13 +243,16 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
               // User Info
               Text(
                 isLoggedIn ? user.username : '欢迎来到 NGA',
-                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 isLoggedIn ? 'UID: ${user.uid}' : '登录以查看更多内容',
-                style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -251,7 +276,13 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
     );
   }
 
-  Widget _buildMenuItem(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap, Color? color}) {
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
     final theme = Theme.of(context);
     final itemColor = color ?? theme.colorScheme.onSurface;
 
@@ -266,7 +297,9 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1)),
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+              ),
             ),
             child: Row(
               children: [
@@ -275,10 +308,20 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                 Expanded(
                   child: Text(
                     title,
-                    style: theme.textTheme.titleMedium?.copyWith(color: itemColor, fontSize: 15, fontWeight: FontWeight.w500),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: itemColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4), size: 18),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.4,
+                  ),
+                  size: 18,
+                ),
               ],
             ),
           ),
@@ -295,17 +338,17 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
           Image.network(
             'https://img.ngacn.cc/base/common/logo.png',
             height: 24,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.forum_rounded,
-              size: 24,
-            ),
+            errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.forum_rounded, size: 24),
           ),
           const SizedBox(height: 8),
           Text(
             'Version 1.0.0',
-            style: Theme.of(
-              context,
-            ).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
           ),
         ],
       ),

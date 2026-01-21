@@ -37,9 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         leading: MenuButton(onPressed: _openMenuDrawer),
         title: const Text('NGA Forum'),
-        actions: [
-          AvatarButton(onPressed: _openProfileDrawer),
-        ],
+        actions: [AvatarButton(onPressed: _openProfileDrawer)],
       ),
       drawer: const MenuDrawer(),
       endDrawer: const ProfileDrawer(),

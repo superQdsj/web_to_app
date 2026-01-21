@@ -1,9 +1,7 @@
 part of '../thread_screen.dart';
 
 class _MainPostHeader extends StatelessWidget {
-  const _MainPostHeader({
-    required this.post,
-  });
+  const _MainPostHeader({required this.post});
 
   final ThreadPost post;
 
@@ -14,20 +12,21 @@ class _MainPostHeader extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _UserAvatar(
-            name: authorLabel,
-            avatarUrl: post.author?.avatar,
-            size: 40,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          // Header row with avatar, author info, and post date
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _UserAvatar(
+                name: authorLabel,
+                avatarUrl: post.author?.avatar,
+                size: 40,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Row(
                   children: [
                     Flexible(
                       child: Text(
@@ -50,16 +49,19 @@ class _MainPostHeader extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  post.contentText,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: _ThreadPalette.textPrimary,
-                  ),
-                ),
-              ],
+              ),
+              // Post date in top-right corner
+              if (post.postDate != null) _PostDateDisplay(date: post.postDate!),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Content
+          Text(
+            post.contentText,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: _ThreadPalette.textPrimary,
             ),
           ),
         ],
@@ -150,11 +152,7 @@ class _ActionPill extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    this.icon,
-    this.iconColor,
-  });
+  const _SectionHeader({required this.title, this.icon, this.iconColor});
 
   final String title;
   final IconData? icon;
@@ -184,3 +182,27 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// Reusable widget for displaying post date.
+///
+/// Ensures consistent styling across all post types:
+/// - Font size: 12px
+/// - Color: textTertiary
+/// - Handles overflow with ellipsis
+class _PostDateDisplay extends StatelessWidget {
+  const _PostDateDisplay({required this.date});
+  final String date;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      date,
+      style: const TextStyle(
+        fontSize: 12,
+        color: _ThreadPalette.textTertiary,
+        fontWeight: FontWeight.w400,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+}
