@@ -22,3 +22,5 @@ private/
 .fvm/
 
 .opencode/
+
+.shared/
