@@ -4,6 +4,7 @@ import '../src/nga_fetcher.dart';
 
 import '../data/nga_repository.dart';
 import '../src/auth/nga_cookie_store.dart';
+import '../src/nga_forum_store.dart';
 import 'thread_screen.dart';
 
 /// Forum content widget (embeddable).
@@ -18,7 +19,6 @@ class ForumContent extends StatefulWidget {
 }
 
 class _ForumContentState extends State<ForumContent> {
-  final _fidController = TextEditingController(text: '7');
   final _threads = <ThreadItem>[];
   final _threadIds = <int>{};
   final _scrollController = ScrollController();
@@ -40,6 +40,12 @@ class _ForumContentState extends State<ForumContent> {
     super.initState();
     _repository = NgaRepository(cookie: _cookie);
     NgaCookieStore.cookie.addListener(_onCookieChanged);
+    NgaForumStore.activeFid.addListener(_onFidChanged);
+
+    // Initial fetch if we have cookie
+    if (NgaCookieStore.hasCookie) {
+      _fetchThreads();
+    }
   }
 
   void _onCookieChanged() {
@@ -48,24 +54,38 @@ class _ForumContentState extends State<ForumContent> {
     _repository = NgaRepository(cookie: _cookie);
     if (mounted) {
       setState(() {});
+      // 如果已选中版块，登录后自动重新加载数据
+      if (NgaForumStore.activeFid.value != null && NgaCookieStore.hasCookie) {
+        _fetchThreads();
+      }
     }
+  }
+
+  void _onFidChanged() {
+    _fetchThreads();
   }
 
   @override
   void dispose() {
     NgaCookieStore.cookie.removeListener(_onCookieChanged);
-    _fidController.dispose();
+    NgaForumStore.activeFid.removeListener(_onFidChanged);
     _scrollController.dispose();
     _repository.close();
     super.dispose();
   }
 
   Future<void> _fetchThreads() async {
-    final fidText = _fidController.text.trim();
-    final fid = int.tryParse(fidText);
-
+    final fid = NgaForumStore.activeFid.value;
     if (fid == null) {
-      setState(() => _error = 'Invalid fid: $fidText');
+      setState(() {
+        _threads.clear();
+        _threadIds.clear();
+        _activeFid = null;
+        _hasMore = false;
+        _loading = false;
+        _loadingMore = false;
+        _error = null;
+      });
       return;
     }
 
@@ -164,44 +184,9 @@ class _ForumContentState extends State<ForumContent> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _buildInputBar(),
         if (_error != null) _buildErrorBanner(),
         Expanded(child: _buildBody()),
       ],
-    );
-  }
-
-  Widget _buildInputBar() {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          const Text('fid: '),
-          SizedBox(
-            width: 80,
-            child: TextField(
-              controller: _fidController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: _loading ? null : _fetchThreads,
-            child: _loading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Load'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -224,7 +209,7 @@ class _ForumContentState extends State<ForumContent> {
 
     if (_threads.isEmpty) {
       return const Center(
-        child: Text('Enter fid and tap Load to fetch threads.'),
+        child: Text('暂无内容，选择版块后会显示主题列表。'),
       );
     }
 
@@ -285,23 +270,23 @@ class _ForumContentState extends State<ForumContent> {
     }
 
     if (!_hasMore) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Center(
           child: Text(
             '没有更多了',
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
       );
     }
 
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Center(
         child: Text(
           '上拉加载更多',
-          style: TextStyle(color: Colors.black54),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );

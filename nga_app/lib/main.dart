@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../src/auth/nga_cookie_store.dart';
 import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,10 +17,9 @@ class NgaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'NGA Forum',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
+      theme: NgaTheme.light,
+      darkTheme: NgaTheme.dark,
+      themeMode: ThemeMode.system, // 跟随系统设置
       home: const HomeScreen(),
     );
   }

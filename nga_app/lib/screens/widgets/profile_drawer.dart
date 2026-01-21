@@ -295,7 +295,10 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
           Image.network(
             'https://img.ngacn.cc/base/common/logo.png',
             height: 24,
-            errorBuilder: (_, __, ___) => const Icon(Icons.forum_rounded, size: 24),
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              Icons.forum_rounded,
+              size: 24,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
