@@ -10,13 +10,13 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 
 ## Progress
 
-| Phase | Goal | Status |
-|-------|------|--------|
-| 1 | Foundation & Authentication | Pending |
-| 2 | Forum Browsing | Pending |
-| 3 | Thread Reading | Pending |
-| 4 | Replies | Pending |
-| 5 | Polish & Performance | Pending |
+| Phase | Goal | Status | Plans |
+|-------|------|--------|-------|
+| 1 | Foundation & Authentication | Planning | 4 plans |
+| 2 | Forum Browsing | Pending | - |
+| 3 | Thread Reading | Pending | - |
+| 4 | Replies | Pending | - |
+| 5 | Polish & Performance | Pending | - |
 
 ---
 
@@ -27,6 +27,13 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 **Dependencies:** None (foundational)
 
 **Requirements:** AUTH-01, AUTH-02, AUTH-03
+
+### Plans
+
+- [ ] 01-01-PLAN.md — Splash screen and auth state initialization
+- [ ] 01-02-PLAN.md — Login WebView sheet UI polish with success animation
+- [ ] 01-03-PLAN.md — Auth-aware header with avatar and username display
+- [ ] 01-04-PLAN.md — Long-press avatar logout integration
 
 ### Success Criteria
 
@@ -143,8 +150,10 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 | UI-02: iOS navigation patterns | 5 |
 | UI-03: Shimmer loading states | 5 |
 
-**Total:** 17/17 requirements mapped ✓
+**Total:** 17/17 requirements mapped
 
 ---
 
 *Roadmap created: 2026-01-23*
+*Phase 1 plans added: 2026-01-23*
+*Plan 01-04 added: 2026-01-23*
