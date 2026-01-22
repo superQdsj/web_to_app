@@ -1,221 +1,255 @@
 # Coding Conventions
 
-**Analysis Date:** 2025-01-23
+**Analysis Date:** 2026-01-23
 
 ## Naming Patterns
 
-**Files:**
-- `snake_case.dart` - All Dart files use snake_case naming
-  - Example: `forum_category_service.dart`, `thread_parser.dart`
+### Files
+- **Pattern:** `snake_case.dart`
+- **Examples:**
+  - `thread_parser.dart`
+  - `forum_category_service.dart`
+  - `nga_http_client.dart`
+  - `menu_drawer_grid.dart`
 
-**Classes and Types:**
-- `UpperCamelCase` - All classes, typedefs, and enums
-  - Example: `ThreadParser`, `ForumCategory`, `NgaHttpClient`
+### Classes and Types
+- **Pattern:** `UpperCamelCase`
+- **Examples:**
+  - `ThreadParser` (parser class)
+  - `NgaCookieStore` (service/singleton)
+  - `ForumCategoryService` (service layer)
+  - `ThreadDetail` (model class)
+  - `NgaHttpClient` (HTTP wrapper)
 
-**Functions and Variables:**
-- `lowerCamelCase` - Methods, local variables, top-level variables
-  - Example: `parseThreadPage`, `_scaffoldKey`, `_loading`
+### Functions and Variables
+- **Pattern:** `lowerCamelCase`
+- **Examples:**
+  - `parseThreadPage()` (method)
+  - `loadCategories()` (method)
+  - `cookie` (ValueNotifier)
+  - `fetchedAt` (property)
+  - `_cachedCategories` (private static)
 
-**Constants:**
-- `lowerCamelCase` for local constants
-- `k` prefix for compile-time constants (Flutter convention)
-  - Example: `kDebugMode`, `defaultUserAgent`
+### Constants
+- **Pattern:** `lowerCamelCase` for values, `k` prefix for compile-time constants
+- **Examples:**
+  - `defaultUserAgent` (static const in class)
+  - `_storageKey` (private static const)
+  - `kDebugMode` (Flutter framework constant)
 
-**Private Members:**
-- Leading underscore `_` indicates private class members
-  - Example: `_parseRequiredInt()`, `_cachedCategories`
+### Private Members
+- **Pattern:** Underscore prefix `_`
+- **Examples:**
+  - `_cachedCategories` (static field)
+  - `_parseLegacy()` (private method)
+  - `_extractUserInfo()` (private helper)
+  - `_client` (private field in HTTP client)
 
 ## Code Style
 
-**Formatting:**
-- Dart formatter is used (default settings)
-- 2-space indentation
-- Trailing commas in collection literals for better formatting
+### Formatting
+- **Tool:** Dart formatter (automatic with `dart format .`)
+- **No custom configuration in `analysis_options.yaml`**
 
-**Linting:**
-- `analysis_options.yaml` located at `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/analysis_options.yaml`
-- Uses `package:flutter_lints/flutter.yaml` as base configuration
-- Key rules enforced:
-  - `avoid_print: false` (debugPrint is preferred)
-  - `prefer_single_quotes: true` (enabled)
+### Linting
+- **Tool:** `flutter_lints` package
+- **Config:** `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/analysis_options.yaml`
+- **Base:** `package:flutter_lints/flutter.yaml`
+- **Additional rules:** None (commented out `prefer_single_quotes`)
 
-**Run Formatting:**
-```bash
-cd nga_app && fvm dart format .
-```
+### Indentation and Spacing
+- **Standard:** 2 spaces for indentation
+- **Line length:** No strict limit enforced
 
 ## Import Organization
 
-**Order (top to bottom):**
-1. Dart core libraries: `dart:async`, `dart:io`
-2. Flutter packages: `package:flutter/...`
-3. Third-party packages: `package:http/...`, `package:html/...`
-4. Relative imports: `../src/...`, `./widgets/...`
+### Order
+1. `dart:` imports (Dart SDK)
+2. `package:` imports (external packages)
+3. Relative imports (local project files)
 
-**Examples from codebase:**
+### Examples
 ```dart
-import 'dart:async';
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-
-import '../src/auth/nga_cookie_store.dart';
-import 'screens/home_screen.dart';
+import 'dart:convert';                          // Dart SDK
+import 'package:html/dom.dart';                 // External package
+import 'package:html/parser.dart' as html_parser;
+import '../model/thread_detail.dart';           // Local relative
+import '../util/url_utils.dart';
 ```
 
-**Path Aliases:**
-- No path aliases configured; relative imports are used consistently
-- Example: `../src/model/thread_detail.dart`
+### Path Aliases
+- **Not used:** All imports use relative paths (`../`, `./`)
 
 ## Error Handling
 
-**Try-Catch Pattern:**
-- Exceptions are caught with `try-catch (e, stackTrace)` pattern
-- Errors are logged via `debugPrint` with context
-- Original exception is rethrown after logging when appropriate
-
-**Example from `nga_app/lib/src/model/forum_category.dart`:**
+### Try-Catch Pattern
 ```dart
-factory ForumCategory.fromJson(Map<String, dynamic> json) {
+try {
+  final json = jsonDecode(jsonString) as Map<String, dynamic>;
+  // Process data
+} catch (e, stackTrace) {
+  debugPrint('[ForumCategoryService] ERROR: $e');
+  debugPrint('[ForumCategoryService] StackTrace: $stackTrace');
+  rethrow;  // Propagate for caller to handle
+}
+```
+
+### Swallowed Errors (Fallback Parsers)
+```dart
+try {
+  return jsonDecode(jsonStr) as Map<String, dynamic>;
+} catch (e) {
+  // Ignore parsing errors and fall back to empty data
+}
+return {};
+```
+
+### Async Error Handling
+```dart
+static Future<void> loadFromStorage() async {
   try {
-    final category = ForumCategory(...);
-    return category;
-  } catch (e, stackTrace) {
-    debugPrint('[ForumCategory.fromJson] ERROR parsing category: $e');
-    debugPrint('[ForumCategory.fromJson] JSON data: $json');
-    debugPrint('[ForumCategory.fromJson] StackTrace: $stackTrace');
-    rethrow;
+    final prefs = await SharedPreferences.getInstance();
+    final savedCookie = prefs.getString(_storageKey) ?? '';
+    cookie.value = savedCookie;
+  } catch (e) {
+    debugPrint('=== [NGA] Failed: $e ===');
+    // Non-critical: silent fail, app continues without cookies
   }
 }
 ```
 
-**Result Objects:**
-- `NgaHttpResponse` wraps HTTP responses with typed fields
-- No Result/Either type pattern currently in use
-
-**Timeouts:**
-- HTTP client uses `Future.timeout()` with custom `TimeoutException`
-- Default timeout: 30 seconds
-- Example from `nga_app/lib/src/http/nga_http_client.dart`:
-```dart
-.timeout(
-  timeout,
-  onTimeout: () {
-    throw TimeoutException('timeout fetching $url');
-  },
-)
-```
-
 ## Logging
 
-**Framework:**
-- `debugPrint()` from `package:flutter/foundation.dart`
-- Conditional logging with `kDebugMode` guard
+### Framework
+- **Tool:** `debugPrint()` from `package:flutter/foundation.dart`
+- **Guard:** Always wrap in `kDebugMode` check
 
-**Logging Prefix Convention:**
-- All logs use `[NGA]` or `[ClassName]` prefix for filtering
-- Example from `nga_app/lib/src/auth/nga_cookie_store.dart`:
+### Pattern
 ```dart
 if (kDebugMode) {
-  debugPrint('=== [NGA] NgaCookieStore.setCookie len=${trimmed.length} ===');
+  debugPrint('[ForumCategoryService] Loading categories from assets...');
 }
 ```
 
-**Stack Traces:**
-- Printed on errors in parsing and service layers
+### Tagging Convention
+- **Format:** `[CategoryName] Message`
+- **Examples:**
+  - `[ForumCategoryService]`
+  - `[NGA] NgaCookieStore.setCookie`
+  - `[NGA] NgaCookieStore.loadFromStorage`
 
 ## Comments
 
-**When to Comment:**
-- Complex parsing logic: explain regex patterns and extraction strategies
-- Public APIs: Dartdoc comments for classes and public methods
-- Chinese comments used for user-facing UI text and business logic notes
+### Documentation Comments
+- **Style:** Doxygen-style `///` for public APIs
+- **Location:** Above classes and methods
+- **Examples:**
+  ```dart
+  /// Parses a thread page HTML (first page only).
+  ///
+  /// MVP goals:
+  /// - extract a list of post bodies as `content_text`
+  /// - author name may be unavailable in raw HTML
+  ThreadDetail parseThreadPage(...) { ... }
+  ```
 
-**JSDoc/TSDoc:**
-- Minimal usage; inline comments preferred for implementation details
-- Example from `nga_app/lib/screens/home_screen.dart`:
-```dart
-/// Main home screen with drawer navigation.
-///
-/// Replaces the bottom tab navigation with:
-/// - Left drawer (MenuDrawer) for multi-function menu
-/// - Right drawer (ProfileDrawer) for user profile
-/// - AppBar with menu button (left) and avatar button (right)
-class HomeScreen extends StatefulWidget {
-```
+### Implementation Comments
+- **Style:** Inline `//` for notes
+- **Examples:**
+  ```dart
+  // 1. Extract metadata via Regex
+  final userInfoMap = _extractUserInfo(htmlText);
 
-**Inline Comments:**
-- Used for TODO notes and explanation of complex logic
-- Example from `nga_app/lib/screens/forum_screen.dart`:
-```dart
-// 如果已选中版块，登录后自动重新加载数据
-if (NgaForumStore.activeFid.value != null && NgaCookieStore.hasCookie) {
-  _fetchThreads();
-}
-```
+  // Attempt hybrid parsing first
+  try { ... }
+  ```
 
 ## Function Design
 
-**Size:**
-- No strict limit; functions are kept focused on single responsibility
-- Complex parsers extract helper methods (e.g., `_parseLegacy`, `_extractUserInfo`)
+### Size
+- **Preference:** Small, focused functions
+- **Example:** Parser has `_extractUserInfo()`, `_extractGroups()`, `_extractDeviceType()` as separate helpers
 
-**Parameters:**
-- Named parameters preferred for optional args with `required` keyword
-- Example from `nga_app/lib/src/http/nga_http_client.dart`:
-```dart
-Future<NgaHttpResponse> getBytes(
-  Uri url, {
-  required String cookieHeaderValue,
-  Duration timeout = const Duration(seconds: 30),
-})
-```
+### Parameters
+- **Named parameters:** Used for complex methods
+- **Pattern:**
+  ```dart
+  ThreadDetail parseThreadPage(
+    String htmlText, {
+    required int tid,
+    required String url,
+    required int fetchedAt,
+  })
+  ```
 
-**Return Values:**
-- Explicit return types on public methods
-- `void` for side-effect methods
+### Return Types
+- **Explicit:** All functions have explicit return types
+- **Void:** Used for side-effect functions (e.g., `setCookie()`)
+
+## Class Design
+
+### Constructors
+- **Positional:** Simple models with positional parameters
+- **Named:** For optional configurations
+- **Examples:**
+  ```dart
+  class ThreadPost {
+    ThreadPost({
+      this.pid,
+      required this.floor,
+      required this.author,
+      required this.authorUid,
+      required this.contentText,
+      this.deviceType,
+      this.postDate,
+    });
+  }
+  ```
+
+### Static Utilities
+- **Pattern:** Service classes with static methods
+- **Examples:**
+  - `ForumCategoryService.loadCategories()`
+  - `NgaCookieStore.setCookie()`
+  - `NgaCookieStore.summarizeCookieHeader()`
+
+### Singleton Pattern
+- **Approach:** Static fields + private constructor
+- **Example:**
+  ```dart
+  class NgaCookieStore {
+    NgaCookieStore._();  // Private constructor
+    static final ValueNotifier<String> cookie = ValueNotifier<String>('');
+  }
+  ```
 
 ## Module Design
 
-**Exports:**
-- Theme module uses barrel exports:
-```dart
-export 'app_colors.dart';
-export 'app_typography.dart';
+### Exports
+- **Barrel files:** Used in theme module
+- **Example:** `theme/app_theme.dart` exports colors and typography
+  ```dart
+  export 'app_colors.dart';
+  export 'app_typography.dart';
+  ```
+
+### Directory Structure
 ```
-
-**Stateless vs Stateful:**
-- StatelessWidget for pure UI components
-- StatefulWidget for UI with state or listeners
-- Example pattern from `nga_app/lib/screens/home_screen.dart`:
-```dart
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  // State implementation
-}
-```
-
-**State Management:**
-- `ValueNotifier` for simple reactive state (e.g., `NgaCookieStore.cookie`)
-- Local `State` for screen-level state
-- Repository pattern (`NgaRepository`) for data access
-
-**Singleton Pattern:**
-- Static instances with private constructor for stores:
-```dart
-class NgaCookieStore {
-  NgaCookieStore._();
-  static final ValueNotifier<String> cookie = ValueNotifier<String>('');
-}
+nga_app/lib/
+├── main.dart                    # Entry point
+├── screens/                     # Pages
+│   └── home_screen.dart
+├── widgets/                     # Reusable UI components
+├── services/                    # Business logic services
+├── src/                         # Internal implementation
+│   ├── auth/                    # Authentication
+│   ├── http/                    # HTTP client
+│   ├── model/                   # Data models
+│   ├── parser/                  # HTML parsers
+│   └── util/                    # Utilities
+└── theme/                       # Theming
 ```
 
 ---
 
-*Convention analysis: 2025-01-23*
+*Convention analysis: 2026-01-23*

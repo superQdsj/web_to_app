@@ -5,72 +5,79 @@
 ## Languages
 
 **Primary:**
-- Dart 3.10+ - All application code (screens, services, models, utilities)
+- Dart 3.10.7+ - Used for all application code (Flutter framework)
+
+**Secondary:**
+- YAML - Used for configuration (pubspec.yaml, analysis_options.yaml)
 
 ## Runtime
 
-**Framework:**
-- Flutter 3.x (via FVM) - Cross-platform mobile framework
-- Platform targets: iOS, Android
+**Environment:**
+- Flutter SDK (managed via FVM - Flutter Version Management)
+- Platform targets: iOS (webview_flutter_android for Android compatibility)
 
 **Package Manager:**
-- pub (Dart package manager)
-- Lockfile: `pubspec.lock`
+- Dart Pub (via `flutter pub get`)
+- Lockfile: `pubspec.lock` (committed to version control)
 
-## Core Dependencies
+## Frameworks
 
-**Flutter Framework:**
-- `flutter sdk: flutter` - Core Flutter framework
-- `cupertino_icons: ^1.0.8` - iOS-style icons
-
-**HTTP & Networking:**
-- `http: ^1.6.0` - HTTP client for API requests
-- `html: ^0.15.6` - HTML parsing (used for forum content parsing)
-
-**WebView & Cookies:**
-- `webview_flutter: ^4.13.1` - WebView widget for login flow
-- `webview_flutter_android: ^4.7.0` - Android WebView implementation
-- `webview_flutter_platform_interface: ^2.13.0` - WebView abstraction layer
-- `webview_cookie_manager_plus: ^2.0.17` - Cookie management for WebView
-
-**Storage:**
-- `shared_preferences: ^2.5.4` - Persistent key-value storage for cookies and user info
-
-**Encoding:**
-- `charset: ^2.0.1` - Character set encoding utilities (GBK handling for NGA)
-
-## Dev Dependencies
+**Core:**
+- Flutter 3.24+ - Mobile UI framework
+- Material Design 3 - UI components and design system
 
 **Testing:**
-- `flutter_test sdk: flutter` - Flutter testing framework
-- `flutter_lints: ^6.0.0` - Recommended lint rules
+- flutter_test - Built-in Flutter testing framework
+- WidgetTester API - For widget testing
+
+**Build/Dev:**
+- flutter_lints 6.0.0 - Code linting rules
+- dart format - Code formatting
+
+## Key Dependencies
+
+**HTTP & Networking:**
+- http 1.6.0 - HTTP client for API requests
+- webview_flutter 4.13.1 - WebView for login flow
+- webview_flutter_android 4.7.0 - Android-specific WebView implementation
+- webview_flutter_platform_interface 2.13.0 - WebView abstraction layer
+
+**Data & Parsing:**
+- html 0.15.6 - HTML parsing for forum content
+- charset 2.0.1 - Character encoding detection (GB18030, GBK, UTF-8)
+
+**Storage:**
+- shared_preferences 2.5.4 - Persistent key-value storage for cookies and user info
+
+**UI Icons:**
+- cupertino_icons 1.0.8 - iOS-style icons
 
 ## Configuration
 
-**Linting:**
-- `analysis_options.yaml` - Uses `flutter_lints/flutter.yaml`
-- Config: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/analysis_options.yaml`
+**Environment:**
+- No .env file - No external environment variable configuration detected
+- Configuration hardcoded in source files
 
-**Build Configuration:**
-- Android: `android/build.gradle.kts` (Gradle Kotlin DSL)
-- iOS: `ios/Podfile` (CocoaPods)
+**Build:**
+- `pubspec.yaml` - Flutter project configuration
+- `analysis_options.yaml` - Dart analyzer configuration (extends flutter.yaml)
 
-**Flutter SDK Version:**
-- Managed via FVM (Flutter Version Management)
-- Version specified in `.fvm/flutter_sdk`
+**Code Style:**
+- flutter_lints recommended rules enabled
+- Single quotes preferred but not enforced
+- print statements allowed (avoid_print disabled)
 
 ## Platform Requirements
 
 **Development:**
-- Flutter SDK (via FVM)
+- Flutter SDK (version managed via FVM)
 - Dart SDK ^3.10.7
-- Android Studio / VS Code (recommended)
-- CocoaPods (for iOS)
-- Gradle (for Android)
+- Android Studio / VS Code (recommended IDEs)
 
 **Production:**
-- iOS 12.0+ (minimum from Flutter default)
-- Android API 21+ (Android 5.0+)
+- iOS 11.0+ (minimum deployment target)
+- Android API 21+ (implicit via Flutter)
+- WebView support on target platforms
 
 ---
 

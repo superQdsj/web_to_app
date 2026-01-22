@@ -4,113 +4,98 @@
 
 ## APIs & External Services
 
-**NGA Forum (Primary Backend):**
+**NGA Forum (bbs.nga.cn):**
+- Primary backend for forum data
 - Base URL: `https://bbs.nga.cn`
-- Purpose: Forum browsing, thread list, thread details, login
-- HTTP Client: Custom `NgaHttpClient` using `http` package
-- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/http/nga_http_client.dart`
-- Repository: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/data/nga_repository.dart`
-
-**Key Endpoints:**
-| Endpoint | Purpose |
-|----------|---------|
-| `/nuke.php?__lib=login&__act=account&login` | User login via WebView |
-| `/thread.php?fid={fid}&page={page}` | Fetch forum thread list |
-| `/read.php?tid={tid}&page={page}` | Fetch thread detail with posts |
-
-## Authentication & Identity
-
-**Authentication Method:** Cookie-based authentication
-- Cookies stored via `shared_preferences`
-- Key cookies:
-  - `ngaPassportUid` - User ID
-  - `ngaPassportCid` - Login token (HttpOnly)
-- Cookie store implementation: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/auth/nga_cookie_store.dart`
-- User store implementation: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/auth/nga_user_store.dart`
-
-**Login Flow:**
-- WebView-based login at `https://bbs.nga.cn/nuke.php?__lib=login&__act=account&login`
-- JavaScript injection to capture `loginSuccess` console log event
-- Cookie extraction via `webview_cookie_manager_plus`
-- Implementation: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/screens/login_webview_sheet.dart`
+- Authentication: Cookie-based (ngaPassportUid, ngaPassportCid)
+- Endpoints:
+  - `GET /thread.php?fid={forum_id}&page={page}` - Fetch forum thread list
+  - `GET /read.php?tid={thread_id}&page={page}` - Fetch thread detail
+  - `GET /nuke.php?__lib=login&__act=account&login` - Login page
 
 ## Data Storage
 
-**Local Storage:**
-- `shared_preferences` - Key-value storage for:
-  - `nga_cookies` - Authentication cookies
-  - `nga_user_info` - User profile data (uid, username, avatar)
-- Location: Device secure storage (platform-dependent)
+**Local Storage (SharedPreferences):**
+- Cookies: `nga_cookies` key - Full cookie header string
+- User Info: `nga_user_info` key - JSON with uid, username, avatarUrl
+- Storage: `shared_preferences` package (iOS NSUserDefaults, Android SharedPreferences)
+- No file storage for user-generated content
 
-**Static Data:**
-- JSON files in `assets/data/` directory
-- Forum category data: `assets/data/forum_categories_merged.json`
+**File Storage:**
+- Local assets only: `assets/data/forum_categories_merged.json`
+- No cloud file storage integration
 
-## WebView Integration
+**Caching:**
+- None detected - No explicit caching layer
 
-**WebView Platform:**
-- `webview_flutter` for cross-platform WebView
-- `webview_flutter_android` for Android-specific features
-- `webview_cookie_manager_plus` for cookie access
+## Authentication & Identity
 
-**Purpose:**
-- User login (captures NGA session cookies)
-- JavaScript channel for login success detection
+**Auth Provider: NGA Forum (Custom Cookie-Based)**
+- Implementation: WebView-based login flow
+  - `login_webview_sheet.dart` - WebView login widget
+  - `webview_cookie_manager_plus` - Extract cookies from WebView
+- Cookie extraction:
+  - `ngaPassportUid` - User ID
+  - `ngaPassportCid` - Login token (HttpOnly)
+- Cookie persistence:
+  - `nga_cookie_store.dart` - Cookie storage service
+  - `nga_user_store.dart` - User info storage service
+- Session duration: Until cookies expire or user logs out
 
-**Android Specific:**
-- Debugging enabled for login flow debugging
-
-## Encoding & Parsing
-
-**Character Encoding:**
-- GBK encoding support (NGA uses GBK)
-- Custom decoder: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/codec/decode_best_effort.dart`
-
-**HTML Parsing:**
-- `html` package for parsing forum pages
-- Custom parsers:
-  - `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/parser/forum_parser.dart` - Forum thread list
-  - `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/parser/thread_parser.dart` - Thread detail and posts
+**JavaScript Bridge:**
+- NGA login page outputs `loginSuccess` JSON via console.log
+- Hook injects JavaScript to capture via `NGA_LOGIN_SUCCESS` channel
+- Captures: uid, username, avatar
 
 ## Monitoring & Observability
 
-**Debug Logging:**
-- `debugPrint` via `kDebugMode` checks
-- Log prefixes: `[NGA][LoginWebView]`, `[NGA][UserStore]`, `[NGA][NgaCookieStore]`
+**Error Tracking:**
+- None detected - No Sentry, Crashlytics, or similar integration
+
+**Logs:**
+- `debugPrint()` for development logging
+- Log prefix: `[NGA][Category]` for filtering
+- Debug mode checks via `kDebugMode`
 
 ## CI/CD & Deployment
 
-**Build Commands:**
-```bash
-cd nga_app && fvm flutter pub get      # Install dependencies
-cd nga_app && fvm flutter run          # Development
-cd nga_app && fvm flutter build apk    # Android APK
-cd nga_app && fvm flutter build ios    # iOS IPA
-```
+**Hosting:**
+- Not configured - Development in progress
 
-**Development Tools:**
-- FVM (Flutter Version Management) for SDK consistency
-- Flutter Analyze for linting
-- Dart format for code formatting
+**CI Pipeline:**
+- Not detected - No GitHub Actions, Bitrise, or CI/CD configuration
 
 ## Environment Configuration
 
-**No environment variables detected:**
-- App does not use `.env` files
-- Configuration hardcoded in source files
-- Cookie/auth data stored in `shared_preferences`
+**Required configuration:**
+- All configuration hardcoded in source
+- No environment-specific builds
 
-## Key Files Reference
+**Secrets location:**
+- No dedicated secrets management
+- Cookies stored in SharedPreferences (not committed to git)
+- `private/` folder git-ignored for development data
 
-| Purpose | File Path |
-|---------|-----------|
-| HTTP Client | `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/http/nga_http_client.dart` |
-| Repository | `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/data/nga_repository.dart` |
-| Cookie Store | `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/auth/nga_cookie_store.dart` |
-| User Store | `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/auth/nga_user_store.dart` |
-| Login WebView | `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/screens/login_webview_sheet.dart` |
-| Thread Parser | `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/parser/thread_parser.dart` |
-| Forum Parser | `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/parser/forum_parser.dart` |
+## Webhooks & Callbacks
+
+**Incoming:**
+- JavaScript message channel for login success callback
+- `NGA_LOGIN_SUCCESS` channel receives JSON from injected script
+
+**Outgoing:**
+- HTTP requests to NGA API endpoints
+- No outgoing webhooks configured
+
+## Data Encoding
+
+**Character Encoding:**
+- `charset` package handles GB18030, GBK, UTF-8
+- Best-effort decoding from response headers and HTML meta tags
+- Chinese forum content requires GBK/GB18030 support
+
+**Content Parsing:**
+- `html` package for HTML parsing
+- Custom parsers: `forum_parser.dart`, `thread_parser.dart`
 
 ---
 

@@ -4,157 +4,180 @@
 
 ## Pattern Overview
 
-**Overall:** Layered Clean Architecture with Flutter-specific adaptations
+**Overall:** Layered Clean Architecture with Static State Management
 
 **Key Characteristics:**
-- Clear separation between UI (presentation), business logic, and data access
-- StatelessWidget/StatefulWidget for UI with ValueNotifier for reactive state
-- Repository pattern for data abstraction
-- HTML parsing layer for web scraping NGA forum content
-- Singleton stores for global state (cookie, user, forum)
+- **Layered separation**: Presentation (UI) → Services → Repository → Data Source
+- **Static stores for global state**: Uses `ValueNotifier` singletons for cookie, user, and forum state
+- **Parser-driven data extraction**: HTML parsing layer extracts structured data from NGA forum responses
+- **Repository pattern**: `NgaRepository` orchestrates HTTP calls and parsing logic
+- **Widget-based composition**: Screens compose reusable widgets; minimal business logic in UI layer
 
 ## Layers
 
-**Presentation Layer (UI):**
-- Purpose: Render UI, handle user interactions
-- Location: `nga_app/lib/screens/`
-- Contains: `HomeScreen`, `ForumScreen`, `ThreadScreen`, `LoginWebViewSheet`
-- Sub-layer: Reusable widgets in `screens/widgets/`
-- Sub-layer: Thread screen parts using `part` directives in `screens/thread/`
+**Presentation Layer (Screens & Widgets):**
+- Purpose: Render UI, handle user interaction, display data
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/screens/`
+- Contains: Stateful/Stateless widgets, screen controllers, user input handlers
+- Depends on: Services, Models, Stores
+- Used by: Flutter framework (MaterialApp router)
 
-**Service Layer:**
-- Purpose: Business logic and data loading
-- Location: `nga_app/lib/src/services/`
-- Contains: `ForumCategoryService` - loads forum categories from JSON assets
-- Pattern: Static methods with caching
+**Services Layer:**
+- Purpose: Business logic for data operations (loading categories, icons)
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/services/`
+- Contains: `ForumCategoryService` (static methods, in-memory cache)
+- Depends on: Models, Flutter services (rootBundle)
+- Used by: UI layer (widgets), other services
 
 **Repository Layer:**
-- Purpose: Coordinate data fetching and parsing
-- Location: `nga_app/lib/data/nga_repository.dart`
-- Contains: `NgaRepository` - orchestrates HTTP client, decoding, and parsers
-- Depends on: `NgaHttpClient`, `DecodeBestEffort`, `ForumParser`, `ThreadParser`
-- Used by: Screen widgets for data operations
+- Purpose: Coordinate HTTP fetching and HTML parsing; provide clean API to screens
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/data/nga_repository.dart`
+- Contains: `NgaRepository` class
+- Depends on: HTTP client, Parsers, Models
+- Used by: Screen state classes (ForumContentState)
 
-**HTTP/Network Layer:**
-- Purpose: HTTP requests with cookie authentication
-- Location: `nga_app/lib/src/http/nga_http_client.dart`
-- Contains: `NgaHttpClient`, `NgaHttpResponse`
-- Features: Custom User-Agent, cookie header injection, timeout handling
+**Data Layer (Core):**
+- Purpose: HTTP communication, HTML parsing, encoding/decoding
+- Location:
+  - HTTP: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/http/nga_http_client.dart`
+  - Parsers: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/parser/`
+  - Codecs: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/codec/`
+  - Models: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/model/`
+- Contains: HTTP client, parsers (ForumParser, ThreadParser), models (ThreadItem, ThreadDetail, ForumCategory)
+- Depends on: dart:io, dart:async, package:http, package:html
+- Used by: Repository layer
 
-**Parser Layer:**
-- Purpose: Parse HTML responses into typed objects
-- Location: `nga_app/lib/src/parser/`
-- Contains: `ForumParser`, `ThreadParser`
-- Uses: `package:html/parser`
-
-**Model Layer:**
-- Purpose: Data structures with JSON serialization
-- Location: `nga_app/lib/src/model/`
-- Contains: `ThreadItem`, `ThreadDetail`, `ForumCategory`, `ForumBoard`, `ForumSubcategory`
-- Pattern: Plain Dart classes with `fromJson` factory constructors
-
-**Auth/State Stores:**
-- Purpose: Global reactive state for authentication and app state
-- Location: `nga_app/lib/src/auth/`, `nga_app/lib/src/nga_forum_store.dart`
+**State Management Layer (Stores):**
+- Purpose: Global reactive state for authentication, user info, active forum
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/auth/`, `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/nga_forum_store.dart`
 - Contains: `NgaCookieStore`, `NgaUserStore`, `NgaForumStore`
-- Pattern: Singleton with `ValueNotifier` for reactive updates
-
-**Utility Layer:**
-- Purpose: Encoding detection and URL utilities
-- Location: `nga_app/lib/src/codec/`, `nga_app/lib/src/util/`
-- Contains: `DecodeBestEffort`, `url_utils`
+- Pattern: Static singletons with `ValueNotifier`
+- Depends on: shared_preferences (persistence)
+- Used by: All layers via listener pattern
 
 **Theme Layer:**
-- Purpose: Centralized theming with Material 3
-- Location: `nga_app/lib/theme/`
+- Purpose: Centralized styling for light/dark modes
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/theme/`
 - Contains: `NgaTheme`, `NgaColors`, `NgaTypography`
-- Features: Light/dark theme with custom color scheme
+- Used by: All widgets via `Theme.of(context)`
 
 ## Data Flow
 
-**Fetching Forum Threads:**
+**Forum Thread List Flow:**
 
-1. User selects a forum board from `MenuDrawerGrid`
-2. `NgaForumStore.activeFid` is updated
-3. `ForumContent` widget observes the change and calls `_fetchThreads()`
-4. `ForumContent` creates `NgaRepository` instance with cookie
-5. `NgaRepository.fetchForumThreads()` builds URL with fid/page
-6. `NgaHttpClient.getBytes()` makes HTTP request with cookie header
-7. Response body decoded via `DecodeBestEffort`
-8. `ForumParser.parseForumThreadList()` extracts HTML data
-9. `ThreadItem` objects returned and displayed in `ListView`
+1. User selects board from `MenuDrawerGrid` (calls `NgaForumStore.setActiveFid()`)
+2. `ForumContent` state detects `activeFid` change via listener
+3. Creates `NgaRepository` instance with current cookie
+4. Calls `repository.fetchForumThreads(fid, page)`
+5. `NgaRepository`:
+   - Constructs URL with `thread.php?fid=...`
+   - Calls `NgaHttpClient.getBytes()` with cookie header
+   - Decodes response via `DecodeBestEffort`
+   - Parses HTML via `ForumParser.parseForumThreadList()`
+6. Returns `List<ThreadItem>` to screen
+7. `ForumContent` updates state, renders `ListView`
 
-**Authentication Flow:**
+**Thread Detail Flow:**
 
-1. User taps avatar button to open `ProfileDrawer`
-2. `LoginWebViewSheet` displayed as modal bottom sheet
-3. WebView loads NGA login page
-4. JavaScript hook injects `NGA_LOGIN_SUCCESS` channel
-5. On successful login, cookies detected via `login_set_cookie_quick` or JS callback
-6. `NgaCookieStore.setCookie()` updates global state
-7. `NgaCookieStore.saveToStorage()` persists to SharedPreferences
-8. WebView closes and app refreshes data
+1. User taps thread in list (`_openThread`)
+2. `Navigator.push()` creates `ThreadScreen(tid: tid, title: title)`
+3. `ThreadScreenState` calls `repository.fetchThread(tid)`
+4. `NgaRepository`:
+   - Constructs URL with `read.php?tid=...`
+   - Fetches and decodes response
+   - Parses via `ThreadParser.parseThreadPage()`
+5. Returns `ThreadDetail` (contains `List<ThreadPost>`)
+6. Renders thread posts
+
+**Login Flow:**
+
+1. User taps avatar → opens `LoginWebViewSheet`
+2. `WebViewController` loads NGA login page
+3. JavaScript channel intercepts `loginSuccess` console logs
+4. `NgaUserStore.setUser()` captures user info
+5. `WebviewCookieManager` extracts cookies
+6. `NgaCookieStore.setCookie()` + `saveToStorage()` persists auth
+7. Sheet closes; listeners in `ForumContent` auto-refresh
 
 **State Management:**
-- `ValueNotifier` for simple reactive state (cookie, user, activeFid)
-- `setState()` for local widget state (loading, error, lists)
-- No external state management library (Riverpod, Bloc, etc.)
+- `ValueNotifier` pattern: Stores emit updates, widgets rebuild via `addListener` or `ValueListenableBuilder`
+- Persistence: `SharedPreferences` for cookie/user storage (async load/save)
 
 ## Key Abstractions
 
 **Repository Pattern:**
-- `NgaRepository` abstracts HTTP and parsing details from UI
-- Constructor accepts cookie and optional client
-- Methods return typed objects: `List<ThreadItem>`, `ThreadDetail`
+- Purpose: Abstract data fetching behind clean API
+- Examples: `NgaRepository` in `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/data/nga_repository.dart`
+- Pattern: Single class orchestrates HTTP + parsing; exposed methods return typed models
 
-**Store Pattern:**
-- Static singleton classes with `ValueNotifier`
-- `NgaCookieStore.cookie` - global auth state
-- `NgaUserStore.user` - authenticated user info
-- `NgaForumStore.activeFid` - current forum selection
-- Load/save from SharedPreferences for persistence
+**Static Store Pattern:**
+- Purpose: Global reactive singleton state
+- Examples:
+  - `NgaCookieStore` in `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/auth/nga_cookie_store.dart`
+  - `NgaUserStore` in `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/auth/nga_user_store.dart`
+  - `NgaForumStore` in `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/nga_forum_store.dart`
+- Pattern: Private constructor + static `ValueNotifier` fields + static methods
 
 **Parser Pattern:**
-- Single-purpose classes with parsing methods
-- `ForumParser.parseForumThreadList(String htmlText)`
-- `ThreadParser.parseThreadPage(...)`
-- Returns typed domain models
+- Purpose: Convert HTML strings to typed Dart objects
+- Examples:
+  - `ForumParser` in `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/parser/forum_parser.dart`
+  - `ThreadParser` in `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/parser/thread_parser.dart`
+- Pattern: Constructor + parse methods returning model lists
 
 ## Entry Points
 
-**main.dart:**
-- Location: `nga_app/lib/main.dart`
-- Responsibilities: Initialize stores, run app with MaterialApp
-- Initializes: `NgaCookieStore.loadFromStorage()`, `NgaUserStore.loadFromStorage()`
+**App Entry:**
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/main.dart`
+- Triggers: `main()` async function
+- Responsibilities:
+  1. Initialize `WidgetsFlutterBinding`
+  2. Load cookies and user from `SharedPreferences`
+  3. Run `NgaApp` (StatelessWidget)
 
-**HomeScreen:**
-- Location: `nga_app/lib/screens/home_screen.dart`
-- Triggers: App launch (set as `home` in MaterialApp)
-- Responsibilities: Scaffold with drawers, contains `ForumContent`
+**Main App Widget:**
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/main.dart` (`NgaApp` class)
+- Responsibilities:
+  1. Configure `MaterialApp` with title, theme, darkTheme
+  2. Set `themeMode: ThemeMode.system` (follow system)
+  3. Set `home: HomeScreen()`
 
-**ForumContent:**
-- Location: `nga_app/lib/screens/forum_screen.dart`
-- Triggers: `NgaForumStore.activeFid` changes, cookie changes
-- Responsibilities: Display thread list, handle pagination
+**Home Screen:**
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/screens/home_screen.dart` (`HomeScreen`)
+- Responsibilities:
+  1. Scaffold with AppBar, left drawer (MenuDrawerGrid), right drawer (ProfileDrawer)
+  2. Body contains `ForumContent` widget
+  3. AppBar leading: `MenuButton` (opens left drawer)
+  4. AppBar actions: `AvatarButton` (opens right drawer, triggers login)
 
-**ThreadScreen:**
-- Location: `nga_app/lib/screens/thread_screen.dart`
-- Triggers: User taps thread in list
-- Responsibilities: Display posts, handle pagination, reply composer
-- Uses: `part` directives for modular components
+**Forum Content:**
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/screens/forum_screen.dart` (`ForumContent`)
+- Responsibilities:
+  1. Listen to `NgaCookieStore` and `NgaForumStore`
+  2. Fetch and display thread list
+  3. Handle pagination (load more on scroll)
+  4. Navigate to `ThreadScreen` on tap
+
+**Thread Screen:**
+- Location: `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/screens/thread_screen.dart` (`ThreadScreen`)
+- Responsibilities:
+  1. Fetch thread detail by `tid`
+  2. Display posts in scrollable list
+  3. Handle reply composition
 
 ## Error Handling
 
-**Strategy:** Try/catch with widget state updates
+**Strategy:** Try-catch with user-facing error banners
 
 **Patterns:**
-- Screen methods wrap async calls in try/catch
-- Error state stored in widget local state (`_error`, `_loadMoreError`)
-- Error banner displayed at top of screen
-- Debug logging via `debugPrint` with `[NGA]` prefix
+- Repository layer throws `Exception` with descriptive messages
+- Screen state catches exceptions, sets `_error` state variable
+- UI displays error banner when `_error != null`
+- Debug mode uses `debugPrint()` for logging; production silent
 
 **Examples:**
 ```dart
+// In ForumContentState
 try {
   final threads = await _repository.fetchForumThreads(fid, page: 1);
   setState(() {
@@ -171,15 +194,26 @@ try {
 
 ## Cross-Cutting Concerns
 
-**Logging:** `debugPrint` with `[NGA]` prefix for NGA-specific logs, conditionally skipped in release builds with `kDebugMode`
+**Logging:** `debugPrint()` guarded by `kDebugMode` checks
+- Prefix: `[NGA]` for easy filtering
+- Examples in `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/src/auth/nga_cookie_store.dart`, `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/data/nga_repository.dart`
 
-**Validation:** Parsers skip invalid data gracefully (continue on null fields, return empty lists on no matches)
+**Validation:**
+- Model `fromJson` factories validate required fields
+- `ForumBoard`, `ForumSubcategory`, `ForumCategory` throw on missing required data
+- Helper parsers: `_parseRequiredInt()`, `_parseRequiredString()`
 
-**Authentication:** Cookie-based via SharedPreferences; WebView for login capture; singleton store for app-wide access
+**Authentication:**
+- WebView-based login captures cookies from browser session
+- Cookie stored in `SharedPreferences` via `NgaCookieStore`
+- Cookie header sent with every HTTP request via `NgaHttpClient`
+- User info captured from JS console log `loginSuccess` message
 
-**Encoding:** `DecodeBestEffort` handles GBK/GB2312 detection for NGA's Chinese encoding
-
-**Theming:** Centralized `NgaTheme` with Material 3; custom colors via `ColorScheme.fromSeed()`; light/dark theme toggle
+**Theming:**
+- Centralized in `/Users/xialiqun/Desktop/nga_mobile/web_to_app/nga_app/lib/theme/`
+- `NgaTheme.light` and `NgaTheme.dark` static getters
+- Custom `NgaColors` extension for app-specific colors
+- `NgaTypography` for text theme consistency
 
 ---
 
