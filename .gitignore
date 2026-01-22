@@ -24,3 +24,5 @@ private/
 .opencode/
 
 .shared/
+.claude/skills/ui-ux-pro-max/scripts/__pycache__/core.cpython-314.pyc
+.claude/skills/ui-ux-pro-max/scripts/__pycache__/design_system.cpython-314.pyc
