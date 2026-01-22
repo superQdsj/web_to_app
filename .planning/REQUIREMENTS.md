@@ -89,21 +89,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-01 | Phase 1 | Pending |
 | AUTH-02 | Phase 1 | Pending |
 | AUTH-03 | Phase 1 | Pending |
-| FORUM-01 | Phase 1 | Pending |
-| FORUM-02 | Phase 1 | Pending |
-| FORUM-03 | Phase 1 | Pending |
-| THREAD-01 | Phase 1 | Pending |
-| THREAD-02 | Phase 1 | Pending |
-| THREAD-03 | Phase 1 | Pending |
-| THREAD-04 | Phase 1 | Pending |
-| REPLY-01 | Phase 1 | Pending |
-| REPLY-02 | Phase 1 | Pending |
-| PERF-01 | Phase 1 | Pending |
-| PERF-02 | Phase 1 | Pending |
-| PERF-03 | Phase 1 | Pending |
-| UI-01 | Phase 1 | Pending |
-| UI-02 | Phase 1 | Pending |
-| UI-03 | Phase 1 | Pending |
+| FORUM-01 | Phase 2 | Pending |
+| FORUM-02 | Phase 2 | Pending |
+| FORUM-03 | Phase 2 | Pending |
+| THREAD-01 | Phase 3 | Pending |
+| THREAD-02 | Phase 3 | Pending |
+| THREAD-03 | Phase 3 | Pending |
+| THREAD-04 | Phase 3 | Pending |
+| REPLY-01 | Phase 4 | Pending |
+| REPLY-02 | Phase 4 | Pending |
+| PERF-01 | Phase 5 | Pending |
+| PERF-02 | Phase 5 | Pending |
+| PERF-03 | Phase 5 | Pending |
+| UI-01 | Phase 5 | Pending |
+| UI-02 | Phase 5 | Pending |
+| UI-03 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 17 total
@@ -113,4 +113,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 ---
 
 *Requirements defined: 2026-01-23*
-*Last updated: 2026-01-23 after project initialization*
+*Last updated: 2026-01-23 after roadmap creation*
