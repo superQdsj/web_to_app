@@ -1,39 +1,277 @@
-# Repository Guidelines
+# Repository Guidelines for AI Agents
 
-## Project Structure & Module Organization
+This document provides guidelines for AI coding agents working in this Flutter mobile forum browsing app codebase.
 
-- `nga_app/`: Flutter 移动端论坛浏览应用。
-- `.env`: 本地 Cookie 输入（敏感信息，已被 git 忽略；请勿提交 secrets）。
-- `out/`: 生成的产物目录（已被 git 忽略）。
+## Project Overview
+
+NGA App is a Flutter mobile application for browsing the [NGA Forum](https://bbs.nga.cn). It supports WebView-based authentication, forum thread browsing, and thread detail reading with automatic GBK/GB18030 encoding handling.
+
+## Project Structure
+
+```
+.
+├── nga_app/                    # Flutter application
+│   ├── lib/
+│   │   ├── main.dart           # App entry point
+│   │   ├── screens/            # Page widgets (forum_screen, thread_screen, etc.)
+│   │   │   ├── widgets/        # Screen-specific widgets
+│   │   │   └── thread/         # Thread-related components
+│   │   ├── src/                # Core business logic
+│   │   │   ├── auth/           # Authentication (cookie store, user store)
+│   │   │   ├── codec/          # Encoding utilities (GBK decoder)
+│   │   │   ├── http/           # HTTP client wrapper
+│   │   │   ├── model/          # Data models (ThreadItem, ThreadDetail)
+│   │   │   ├── parser/         # HTML parsers (forum, thread)
+│   │   │   ├── services/       # Business services
+│   │   │   └── util/           # Utility functions
+│   │   ├── data/               # Repository layer
+│   │   └── theme/              # Theme configuration
+│   └── test/                   # Test files
+├── docs/                       # Documentation
+├── scripts/                    # Development scripts (gwt.sh for worktrees)
+├── private/                    # Local sensitive files (git-ignored)
+└── out/                        # Build outputs (git-ignored)
+```
 
 ## Build, Test, and Development Commands
 
-- 确保 `fvm` 已安装并且 Flutter/Dart SDK 已配置。
-- 安装依赖: `cd nga_app && fvm flutter pub get`
-- 运行应用: `cd nga_app && fvm flutter run`
-- 运行测试: `cd nga_app && fvm flutter test`
-- 代码分析: `cd nga_app && fvm flutter analyze`
-- 并行开发: `./scripts/gwt.sh <分支名>` (详见 `docs/development.md`)
+All commands require `fvm` (Flutter Version Manager). Run from project root or `nga_app/` as indicated.
 
-## Parallel Development & Build Policy
+```bash
+# Install dependencies
+cd nga_app && fvm flutter pub get
 
-- **Git Worktree**: 推荐使用 `git worktree` 进行多分支并行开发。
-- **Build Policy**: 由于 `build/` 目录极其庞大且易导致缓存污染，在非主工作区（Worktree）中，**禁止/不建议**执行完整的 `build` 或 `run` 命令进行验证。
-- **Validation**: 仅需通过代码编辑器语法检查和 `fvm flutter analyze` 确保逻辑正确即可。
+# Run application
+cd nga_app && fvm flutter run
 
-## Coding Style & Naming Conventions
+# Run ALL tests
+cd nga_app && fvm flutter test
 
-- Dart: 遵循现有风格，保持格式一致（需要时使用 `fvm dart format .`）。
-- 命名规范 (Dart): 变量/函数使用 `lowerCamelCase`，类型使用 `UpperCamelCase`，文件名使用 `snake_case`。
-- 保持修改专注：优先编写小型纯函数，修改用户可见行为时更新相关帮助文本。
+# Run SINGLE test file
+cd nga_app && fvm flutter test test/parser/thread_parser_test.dart
+
+# Run tests matching a pattern
+cd nga_app && fvm flutter test --name "should extract"
+
+# Code analysis (linting)
+cd nga_app && fvm flutter analyze
+
+# Format code
+cd nga_app && fvm dart format .
+
+# Parallel development (creates git worktree)
+./scripts/gwt.sh <branch-name>
+```
+
+## Parallel Development Policy
+
+- **Git Worktree**: Use `./scripts/gwt.sh <branch>` for multi-branch parallel development
+- **Build Policy**: Avoid `flutter run` or `flutter build` in worktrees - build directories are huge (GB+) and cause cache pollution
+- **Validation**: Use `fvm flutter analyze` for verification in worktrees
+
+## Code Style Guidelines
+
+### Naming Conventions
+
+| Type | Style | Example |
+|------|-------|---------|
+| Variables/Functions | lowerCamelCase | `fetchThreads`, `currentPage`, `_loading` |
+| Classes/Types | UpperCamelCase | `ThreadItem`, `NgaRepository`, `ForumParser` |
+| File names | snake_case | `forum_screen.dart`, `nga_cookie_store.dart` |
+| Private members | Leading underscore | `_client`, `_cookie`, `_threads` |
+| Constants | lowerCamelCase | `defaultUserAgent`, `_storageKey` |
+
+### Import Conventions
+
+```dart
+// 1. Dart SDK imports first
+import 'dart:async';
+import 'dart:io';
+
+// 2. Package imports (external dependencies)
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+// 3. Relative imports for local files (preferred over package imports)
+import '../src/model/thread_item.dart';
+import '../data/nga_repository.dart';
+```
+
+### Formatting & Types
+
+- **Line length**: Default Dart formatter settings (80 chars soft limit)
+- **Trailing commas**: Use in multi-line argument lists for better diffs
+- **Type annotations**: Explicit for public APIs and class members, inferred OK for local variables
+- **Null safety**: Use required named parameters, nullable types with `?` where appropriate
+- **No type suppressions**: Never use `as dynamic`, `// ignore:` for type errors
+
+### Model Classes
+
+```dart
+class ThreadItem {
+  ThreadItem({
+    required this.tid,        // Required non-nullable
+    required this.title,
+    required this.author,     // Nullable fields still use required
+  });
+
+  final int tid;              // Immutable fields with final
+  final String title;
+  final String? author;       // Nullable when data may be missing
+
+  Map<String, Object?> toJson() => {  // snake_case for JSON keys
+    'tid': tid,
+    'author_uid': authorUid,
+  };
+}
+```
+
+### State Management
+
+- **ValueNotifier**: Used for simple global state (no external state management library)
+- **Pattern**: Static ValueNotifier with listeners in StatefulWidget
+
+```dart
+// Store pattern
+class NgaCookieStore {
+  static final ValueNotifier<String> cookie = ValueNotifier<String>('');
+  static void setCookie(String value) => cookie.value = value;
+}
+
+// Usage in widget
+@override
+void initState() {
+  super.initState();
+  NgaCookieStore.cookie.addListener(_onCookieChanged);
+}
+
+@override
+void dispose() {
+  NgaCookieStore.cookie.removeListener(_onCookieChanged);
+  super.dispose();
+}
+```
+
+### Error Handling
+
+```dart
+// Use try-catch with specific error messages
+try {
+  final threads = await _repository.fetchForumThreads(fid);
+  setState(() => _threads.addAll(threads));
+} catch (e) {
+  setState(() => _error = e.toString());
+}
+
+// Throw descriptive exceptions
+if (resp.statusCode != 200) {
+  throw Exception('Failed to fetch forum: HTTP ${resp.statusCode}');
+}
+
+// Debug logging pattern
+if (kDebugMode) {
+  debugPrint('=== [NGA] Context message: $variable ===');
+}
+```
+
+### Widget Organization
+
+- **Screen widgets**: Full-page components in `screens/` folder
+- **Reusable widgets**: Shared components in `screens/widgets/`
+- **Private widgets**: Prefixed with underscore, same file as parent
+- **StatelessWidget**: Prefer when no local state needed
+
+```dart
+// Private helper widget in same file
+class _ThreadTile extends StatelessWidget {
+  const _ThreadTile({required this.thread, required this.onTap});
+  
+  final ThreadItem thread;
+  final VoidCallback onTap;
+  
+  @override
+  Widget build(BuildContext context) { ... }
+}
+```
 
 ## Testing Guidelines
 
-- Flutter 测试位于 `nga_app/test/`；运行命令: `cd nga_app && fvm flutter test`。
-- 至少在 PR 描述中包含可复现的手动测试步骤（具体命令 + 预期结果）。
+### Test File Organization
 
-## Commit & Pull Request Guidelines
+- Tests mirror source structure: `lib/src/parser/` -> `test/parser/`
+- Widget tests in `test/widget_test.dart`
+- Test file naming: `<source_name>_test.dart`
 
-- 使用 Conventional Commits 格式（如 `feat: ...`、`fix: ...`、`chore: ...`）。
-- PR 应包含：目的/摘要、运行方式（命令）、以及任何解析/兼容性注意事项。
-- 永远不要提交 secrets：Cookie headers 或复制的 cURL 片段；在日志和截图中隐藏 `Cookie` 值。
+### Test Patterns
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:nga_app/src/parser/thread_parser.dart';
+
+void main() {
+  test('Parser should extract metadata from HTML', () {
+    final parser = ThreadParser();
+    final detail = parser.parseThreadPage(html, tid: 123, ...);
+    
+    expect(detail.posts.isNotEmpty, isTrue);
+    expect(detail.posts[0].author?.username, 'expected_name');
+  });
+}
+```
+
+### Running Tests
+
+```bash
+# All tests
+fvm flutter test
+
+# Single file
+fvm flutter test test/parser/thread_parser_test.dart
+
+# By name pattern
+fvm flutter test --name "should extract"
+
+# With coverage
+fvm flutter test --coverage
+```
+
+## Commit & PR Guidelines
+
+- **Conventional Commits**: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`
+- **PR Requirements**: Purpose/summary, run commands, any compatibility notes
+- **Never commit**: Cookies, `.env` files, anything in `private/` folder
+- **Mask in logs**: Always hide Cookie values in logs and screenshots
+
+## Security
+
+- **Cookies**: Stored locally via SharedPreferences, never committed
+- **Sensitive files**: Use `private/` directory (git-ignored)
+- **Debug output**: Summarize cookies by name/length, never log full values
+
+## Common Patterns
+
+### HTTP Client Usage
+
+```dart
+final client = NgaHttpClient();
+final response = await client.getBytes(
+  url,
+  cookieHeaderValue: cookie,
+  timeout: const Duration(seconds: 30),
+);
+```
+
+### Repository Pattern
+
+```dart
+class NgaRepository {
+  NgaRepository({required String cookie}) : _cookie = cookie;
+  
+  Future<List<ThreadItem>> fetchForumThreads(int fid) async { ... }
+  void close() => _client.close();
+}
+```
+
+## Linting
+
+Uses `package:flutter_lints/flutter.yaml` base rules. Run `fvm flutter analyze` to check.
