@@ -6,12 +6,14 @@ class ForumBoard {
   final String name;
   final String? info;
   final int? stid;
+  final String? icon;
 
   const ForumBoard({
     required this.fid,
     required this.name,
     this.info,
     this.stid,
+    this.icon,
   });
 
   factory ForumBoard.fromJson(Map<String, dynamic> json) {
@@ -21,6 +23,7 @@ class ForumBoard {
         name: _parseRequiredString(json['name']),
         info: _parseNullableString(json['info']),
         stid: _parseNullableInt(json['stid']),
+        icon: _parseNullableString(json['icon']),
       );
       return board;
     } catch (e, stackTrace) {

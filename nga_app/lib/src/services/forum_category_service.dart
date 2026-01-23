@@ -1,8 +1,16 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
+import 'package:flutter/foundation.dart' show compute, debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../model/forum_category.dart';
+
+// Top-level function for Isolate parsing
+List<ForumCategory> _parseCategories(String jsonString) {
+  final json = jsonDecode(jsonString) as Map<String, dynamic>;
+  return (json['categories'] as List<dynamic>)
+      .map((e) => ForumCategory.fromJson(e as Map<String, dynamic>))
+      .toList();
+}
 
 class ForumCategoryService {
   static List<ForumCategory>? _cachedCategories;
@@ -24,7 +32,7 @@ class ForumCategoryService {
       }
 
       final jsonString = await rootBundle.loadString(
-        'assets/data/forum_categories.json',
+        'assets/data/forum_categories_merged.json',
       );
 
       if (kDebugMode) {
@@ -33,18 +41,8 @@ class ForumCategoryService {
         );
       }
 
-      final json = jsonDecode(jsonString) as Map<String, dynamic>;
-
-      if (kDebugMode) {
-        final categoriesRaw = json['categories'] as List<dynamic>?;
-        debugPrint(
-          '[ForumCategoryService] Found ${categoriesRaw?.length ?? 0} raw categories to parse',
-        );
-      }
-
-      final categories = (json['categories'] as List<dynamic>)
-          .map((e) => ForumCategory.fromJson(e as Map<String, dynamic>))
-          .toList();
+      // Parse in background isolate to avoid blocking UI
+      final categories = await compute(_parseCategories, jsonString);
 
       if (kDebugMode) {
         debugPrint(

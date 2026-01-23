@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../src/nga_forum_store.dart';
 import '../../src/model/forum_category.dart';
@@ -101,34 +100,31 @@ class _MenuDrawerState extends State<MenuDrawer> {
               size: 300,
             ),
           ),
-          // Backdrop Blur for glass effect
+          // Background with gradient (no blur for performance)
           Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      (theme.brightness == Brightness.light
-                              ? _surfaceLight
-                              : const Color(0xFF2C2C2E))
-                          .withValues(alpha: 0.9),
-                      (theme.brightness == Brightness.light
-                              ? _backgroundLight
-                              : const Color(0xFF1C1C1E))
-                          .withValues(alpha: 0.95),
-                    ],
-                  ),
-                  border: Border(
-                    right: BorderSide(
-                      color: (theme.brightness == Brightness.light
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.1))
-                          .withValues(alpha: 0.3),
-                      width: 0.5,
-                    ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    (theme.brightness == Brightness.light
+                            ? _surfaceLight
+                            : const Color(0xFF2C2C2E))
+                        .withValues(alpha: 0.98),
+                    (theme.brightness == Brightness.light
+                            ? _backgroundLight
+                            : const Color(0xFF1C1C1E))
+                        .withValues(alpha: 0.98),
+                  ],
+                ),
+                border: Border(
+                  right: BorderSide(
+                    color: (theme.brightness == Brightness.light
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.1))
+                        .withValues(alpha: 0.3),
+                    width: 0.5,
                   ),
                 ),
               ),

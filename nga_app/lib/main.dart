@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'screens/splash_screen.dart';
+import 'src/services/forum_category_service.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Fire-and-forget pre-load to warm cache before drawer opens
+  ForumCategoryService.loadCategories();
   runApp(const NgaApp());
 }
 
