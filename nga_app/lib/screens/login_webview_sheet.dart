@@ -18,7 +18,8 @@ class LoginWebViewSheet extends StatefulWidget {
   State<LoginWebViewSheet> createState() => _LoginWebViewSheetState();
 }
 
-class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
+class _LoginWebViewSheetState extends State<LoginWebViewSheet>
+    with SingleTickerProviderStateMixin {
   static final Uri _loginUri = Uri.parse(
     'https://bbs.nga.cn/nuke.php?__lib=login&__act=account&login',
   );
@@ -26,6 +27,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
   final _cookieManager = WebviewCookieManager();
 
   late final WebViewController _controller;
+  late final AnimationController _animationController;
 
   bool _loading = true;
   String? _currentUrl;
@@ -33,6 +35,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
   bool _detectedLoginCookie = false;
   bool _autoCaptured = false;
   bool _capturedUserInfo = false;
+  bool _showSuccessAnimation = false;
 
   static const Duration _autoCaptureDelay = Duration(milliseconds: 300);
 
@@ -58,6 +61,19 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
         .join('; ');
   }
 
+  /// 显示成功动画并关闭登录页
+  Future<void> _showSuccessAndClose() async {
+    if (!mounted) return;
+
+    setState(() => _showSuccessAnimation = true);
+
+    // 等待动画完成后再关闭
+    await Future<void>.delayed(const Duration(milliseconds: 1000));
+
+    if (!mounted) return;
+    Navigator.of(context).pop(true);
+  }
+
   /// 将 WebView Cookie 同步到 App（`NgaCookieStore`），并关闭登录页。
   ///
   /// 说明：
@@ -78,7 +94,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
     await NgaCookieStore.saveToStorage();
 
     if (mounted) {
-      Navigator.of(context).pop(true);
+      await _showSuccessAndClose();
     }
   }
 
@@ -192,6 +208,11 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
   void initState() {
     super.initState();
 
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel(
@@ -269,6 +290,12 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
   }
 
   @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
 
@@ -286,7 +313,55 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet> {
                   children: [
                     WebViewWidget(controller: _controller),
                     if (_loading) const LinearProgressIndicator(minHeight: 2),
+                    if (_showSuccessAnimation) _buildSuccessAnimation(context),
                   ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessAnimation(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Positioned.fill(
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: _showSuccessAnimation ? 1.0 : 0.0,
+        child: Container(
+          color: colorScheme.surface.withValues(alpha: 0.9),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.check_rounded,
+                  size: 48,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '登录成功',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
