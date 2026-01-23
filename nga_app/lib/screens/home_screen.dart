@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../src/auth/nga_user_store.dart';
 import 'widgets/avatar_button.dart';
 import 'widgets/menu_button.dart';
-import 'widgets/menu_drawer.dart';
+import 'widgets/menu_drawer_grid.dart';
 import 'widgets/profile_drawer.dart';
 import 'forum_screen.dart';
 
@@ -36,10 +37,15 @@ class _HomeScreenState extends State<HomeScreen> {
       key: _scaffoldKey,
       appBar: AppBar(
         leading: MenuButton(onPressed: _openMenuDrawer),
-        title: const Text('NGA Forum'),
+        title: ValueListenableBuilder<NgaUserInfo?>(
+          valueListenable: NgaUserStore.user,
+          builder: (context, user, _) {
+            return Text(user != null ? 'Hi, ${user.username}' : 'NGA Forum');
+          },
+        ),
         actions: [AvatarButton(onPressed: _openProfileDrawer)],
       ),
-      drawer: const MenuDrawer(),
+      drawer: const MenuDrawerGrid(),
       endDrawer: const ProfileDrawer(),
       body: const ForumContent(),
     );
