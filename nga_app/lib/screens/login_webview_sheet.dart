@@ -299,26 +299,54 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
 
-    return SafeArea(
-      child: Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height - top,
-          child: Column(
-            children: [
-              _buildTopBar(context),
-              if (_error != null) _buildErrorBanner(context),
-              Expanded(
-                child: Stack(
-                  children: [
-                    WebViewWidget(controller: _controller),
-                    if (_loading) const LinearProgressIndicator(minHeight: 2),
-                    if (_showSuccessAnimation) _buildSuccessAnimation(context),
-                  ],
-                ),
+    return Column(
+      children: [
+        // iOS-style drag handle
+        _buildDragHandle(context),
+        SafeArea(
+          bottom: false,
+          child: Material(
+            color: Theme.of(context).colorScheme.surface,
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height - top - 24,
+              child: Column(
+                children: [
+                  _buildTopBar(context),
+                  if (_error != null) _buildErrorBanner(context),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        WebViewWidget(controller: _controller),
+                        if (_loading)
+                          Container(
+                            margin: const EdgeInsets.only(top: 1),
+                            child: const LinearProgressIndicator(minHeight: 2),
+                          ),
+                        if (_showSuccessAnimation)
+                          _buildSuccessAnimation(context),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDragHandle(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 12, bottom: 8),
+      child: Container(
+        width: 40,
+        height: 4,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.outlineVariant.withValues(
+            alpha: 0.6,
+          ),
+          borderRadius: BorderRadius.circular(2),
         ),
       ),
     );
@@ -372,48 +400,93 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
   }
 
   Widget _buildTopBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+          bottom: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
         ),
       ),
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Close',
+            tooltip: '关闭',
             onPressed: () => Navigator.of(context).pop(false),
-            icon: const Icon(Icons.close),
+            icon: Icon(
+              Icons.close,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
+          const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              _currentUrl ?? _loginUri.toString(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _currentUrl?.replaceAll('https://', '') ??
+                      _loginUri.toString().replaceAll('https://', ''),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
           if (_detectedLoginCookie)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Text(
-                'Cookie ready',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 14,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Cookie 已就绪',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ],
               ),
             ),
+          const SizedBox(width: 8),
           IconButton(
-            tooltip: 'Reload',
+            tooltip: '刷新',
             onPressed: _reload,
-            icon: const Icon(Icons.refresh),
+            icon: Icon(
+              Icons.refresh,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(width: 4),
           FilledButton.tonal(
-            onPressed: _captureCookieAndClose,
-            child: const Text('Use Login'),
+            onPressed: _capturedUserInfo ? null : _captureCookieAndClose,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: Text(
+              _capturedUserInfo ? '登录成功' : '使用登录',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),
