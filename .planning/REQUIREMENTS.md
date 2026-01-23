@@ -9,9 +9,9 @@ Requirements for MVP release. Each maps to roadmap phases.
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can log in via WebView and extract NGA cookies
-- [ ] **AUTH-02**: User session persists across app restarts
-- [ ] **AUTH-03**: User identity (avatar, username) displayed throughout app
+- [x] **AUTH-01**: User can log in via WebView and extract NGA cookies
+- [x] **AUTH-02**: User session persists across app restarts
+- [x] **AUTH-03**: User identity (avatar, username) displayed throughout app
 
 ### Forum Browsing
 
@@ -86,9 +86,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 1 | Complete |
 | FORUM-01 | Phase 2 | Pending |
 | FORUM-02 | Phase 2 | Pending |
 | FORUM-03 | Phase 2 | Pending |

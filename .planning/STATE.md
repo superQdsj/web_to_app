@@ -9,7 +9,7 @@
 | Core Value | Fast, beautiful access to all NGA forum features |
 | Current Phase | 1-foundation-authentication |
 | Planning Status | Roadmap Complete |
-| Current Plan | 01-03 complete |
+| Current Plan | 01 complete |
 
 ## Current Position
 
@@ -17,7 +17,7 @@
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 1 | Foundation & Authentication | AUTH-01, AUTH-02, AUTH-03 | In Progress (3/4 plans) |
+| 1 | Foundation & Authentication | AUTH-01, AUTH-02, AUTH-03 | Complete |
 | 2 | Forum Browsing | FORUM-01, FORUM-02, FORUM-03 | Pending |
 | 3 | Thread Reading | THREAD-01, THREAD-02, THREAD-03, THREAD-04 | Pending |
 | 4 | Replies | REPLY-01, REPLY-02 | Pending |
@@ -26,7 +26,7 @@
 ### Progress Bar
 
 ```
-Phase 1: [███████░░░] 75% (3/4 plans)
+Phase 1: [██████████] 100% (4/4 plans)
 Phase 2: [          ] 0%
 Phase 3: [          ] 0%
 Phase 4: [          ] 0%
@@ -40,7 +40,7 @@ Phase 5: [          ] 0%
 | 01 | Splash Screen | Complete |
 | 02 | Login WebView Sheet Polish | Complete |
 | 03 | Login Success & User Info | Complete |
-| 04 | Logout Integration | Pending |
+| 04 | Logout Integration | Complete |
 
 ## Performance Metrics
 
@@ -76,10 +76,10 @@ Phase 5: [          ] 0%
 - **Research:** `/Users/xialiqun/Desktop/nga_mobile/web_to_app/.planning/research/`
 
 ### Last Activity
-- 2026-01-23 - Completed plan 01-03 (Login Success & User Info)
-  - Avatar button shows real avatar from NgaUserStore
-  - Header shows personalized greeting
-  - Tooltip displays username on hover
+- 2026-01-23 - Completed phase 1 (Foundation & Authentication)
+  - All 4 plans executed successfully
+  - Login, session persistence, avatar display, and logout all working
+  - Phase 2 (Forum Browsing) ready for planning
 
 ---
 
