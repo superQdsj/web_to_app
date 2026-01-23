@@ -71,34 +71,34 @@ class _AvatarButtonState extends State<AvatarButton> {
     return ValueListenableBuilder<NgaUserInfo?>(
       valueListenable: NgaUserStore.user,
       builder: (context, user, _) {
-        final loggedIn = user != null;
-        final hasAvatar = loggedIn && user!.avatarUrl != null;
+        final avatarUrl = user?.avatarUrl;
+        final hasAvatar = avatarUrl != null;
 
         return Padding(
           padding: const EdgeInsets.only(right: 8),
           child: Tooltip(
-            message: loggedIn ? user!.username : '',
+            message: user?.username ?? '',
             child: MouseRegion(
-              cursor: loggedIn && widget.onLogout != null
+              cursor: user != null && widget.onLogout != null
                   ? SystemMouseCursors.click
                   : SystemMouseCursors.basic,
               child: GestureDetector(
                 onTap: widget.onPressed,
-                onLongPress: loggedIn && widget.onLogout != null
+                onLongPress: user != null && widget.onLogout != null
                     ? _handleLogout
                     : null,
                 child: CircleAvatar(
                   radius: 20,
-                  backgroundColor: loggedIn
+                  backgroundColor: user != null
                       ? theme.colorScheme.primaryContainer
                       : theme.colorScheme.surfaceContainerHighest,
                   foregroundImage:
-                      hasAvatar ? NetworkImage(user!.avatarUrl!) : null,
+                      hasAvatar ? NetworkImage(avatarUrl) : null,
                   child: !hasAvatar
                       ? Icon(
-                          loggedIn ? Icons.person : Icons.person_outline,
+                          user != null ? Icons.person : Icons.person_outline,
                           size: 22,
-                          color: loggedIn
+                          color: user != null
                               ? theme.colorScheme.onPrimaryContainer
                               : theme.colorScheme.onSurfaceVariant,
                         )
