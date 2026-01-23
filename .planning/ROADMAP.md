@@ -13,7 +13,7 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 | Phase | Goal | Status | Plans |
 |-------|------|--------|-------|
 | 1 | Foundation & Authentication | Complete | 4/4 |
-| 2 | Forum Browsing | Planning | 3 plans |
+| 2 | Forum Browsing | Planning | 4 plans |
 | 3 | Thread Reading | Planning | 3 plans |
 | 4 | Replies | Planning | 2 plans |
 | 5 | Polish & Performance | Pending | - |
@@ -57,6 +57,7 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 - [ ] 02-01-PLAN.md — Empty state with drawer CTA
 - [ ] 02-02-PLAN.md — Board selection UX improvements
 - [ ] 02-03-PLAN.md — MenuDrawerGrid verification and polish
+- [ ] 02-04-PLAN.md — Thread list pagination
 
 ### Success Criteria
 
@@ -178,3 +179,4 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 *Phase 3 plans added: 2026-01-23*
 *Phase 2 plans added: 2026-01-23*
 *Phase 1 completed: 2026-01-23*
+*Plan 02-04 added for pagination (FORUM-03): 2026-01-23*
