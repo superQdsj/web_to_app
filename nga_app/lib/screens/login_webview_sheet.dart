@@ -39,19 +39,31 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
 
   static const Duration _autoCaptureDelay = Duration(milliseconds: 300);
 
-  void _log(String message) {
-    if (!kDebugMode) return;
-    debugPrint('[NGA][LoginWebView] $message');
-  }
-
   /// NGA 登录关键 Cookie：
-  /// - `ngaPassportUid`: 用户 UID
+  /// - `ngaPassportUid`: 用户 UID（必须是正整数，0 或负数表示游客）
   /// - `ngaPassportCid`: 登录 Token（通常是 `HttpOnly`，JS 读不到）
   ///
-  /// 这里用“是否存在上述字段”来判断 WebView 侧是否已完成登录。
+  /// 判断标准：`ngaPassportUid` 存在且值为正整数（真实用户 UID）。
+  /// 游客 Cookie 的 `ngaPassportUid` 通常是 0 或空值。
   bool _looksLikeLoginCookie(Iterable<Cookie> cookies) {
-    final names = cookies.map((c) => c.name).toSet();
-    return names.contains('ngaPassportUid') || names.contains('ngaPassportCid');
+    // Debug: log all cookie name=value pairs
+    if (kDebugMode) {
+      for (final cookie in cookies) {
+        debugPrint('[NGA][LoginWebView] Cookie: ${cookie.name}=${cookie.value}');
+      }
+    }
+
+    for (final cookie in cookies) {
+      if (cookie.name == 'ngaPassportUid') {
+        final uid = int.tryParse(cookie.value) ?? 0;
+        final isValid = uid > 0;
+        debugPrint(
+            '[NGA][LoginWebView] _looksLikeLoginCookie: ngaPassportUid=$uid isValid=$isValid');
+        return isValid; // Real user has positive uid
+      }
+    }
+    debugPrint('[NGA][LoginWebView] _looksLikeLoginCookie: ngaPassportUid not found');
+    return false;
   }
 
   String _cookieHeaderFromCookies(Iterable<Cookie> cookies) {
@@ -89,7 +101,8 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
     if (cookieHeaderValue.trim().isEmpty) return;
 
     _autoCaptured = true;
-    _log('applyCookieAndClose($reason) len=${cookieHeaderValue.length}');
+    debugPrint(
+        '[NGA][LoginWebView] applyCookieAndClose($reason) len=${cookieHeaderValue.length}');
     NgaCookieStore.setCookie(cookieHeaderValue);
     await NgaCookieStore.saveToStorage();
 
@@ -115,13 +128,13 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
         setState(() => _detectedLoginCookie = true);
       }
       if (kDebugMode) {
-        _log(
-          'probe($reason) count=${cookies.length} ready=$ready '
+        debugPrint(
+          '[NGA][LoginWebView] probe($reason) count=${cookies.length} ready=$ready '
           'names=${cookies.map((c) => c.name).toList()}',
         );
       }
     } catch (e) {
-      _log('probe($reason) failed: $e');
+      debugPrint('[NGA][LoginWebView] probe($reason) failed: $e');
     }
   }
 
@@ -143,7 +156,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
       if (!_looksLikeLoginCookie(cookies)) return;
       await _applyCookieAndClose(reason: reason, cookies: cookies);
     } catch (e) {
-      _log('tryAutoCapture($reason) failed: $e');
+      debugPrint('[NGA][LoginWebView] tryAutoCapture($reason) failed: $e');
     }
   }
 
@@ -176,7 +189,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
 })();
 ''');
     } catch (e) {
-      _log('inject loginSuccess hook failed: $e');
+      debugPrint('[NGA][LoginWebView] inject loginSuccess hook failed: $e');
     }
   }
 
@@ -192,15 +205,15 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
       unawaited(NgaUserStore.setUser(userInfo));
 
       if (kDebugMode) {
-        _log(
-          'captured userInfo uid=${userInfo.uid} username=${userInfo.username}',
+        debugPrint(
+          '[NGA][LoginWebView] captured userInfo uid=${userInfo.uid} username=${userInfo.username}',
         );
       }
 
       // 作为兜底：如果导航回调没有捕捉到 `login_set_cookie_quick`，这里也触发一次 cookie 探测。
       _tryAutoCapture(reason: 'jsLoginSuccess');
     } catch (e) {
-      _log('parse loginSuccess json failed: $e');
+      debugPrint('[NGA][LoginWebView] parse loginSuccess json failed: $e');
     }
   }
 
@@ -278,6 +291,14 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
         return;
       }
 
+      // Validate cookies - reject guest cookies
+      if (!_looksLikeLoginCookie(cookies)) {
+        setState(() {
+          _error = '未检测到有效登录，请先完成登录。';
+        });
+        return;
+      }
+
       await _applyCookieAndClose(reason: 'manualCapture', cookies: cookies);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -297,18 +318,15 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
-
     return Column(
       children: [
         // iOS-style drag handle
         _buildDragHandle(context),
-        SafeArea(
-          bottom: false,
-          child: Material(
-            color: Theme.of(context).colorScheme.surface,
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height - top - 24,
+        Expanded(
+          child: SafeArea(
+            bottom: false,
+            child: Material(
+              color: Theme.of(context).colorScheme.surface,
               child: Column(
                 children: [
                   _buildTopBar(context),
