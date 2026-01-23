@@ -43,7 +43,12 @@ class _HomeScreenState extends State<HomeScreen> {
             return Text(user != null ? 'Hi, ${user.username}' : 'NGA Forum');
           },
         ),
-        actions: [AvatarButton(onPressed: _openProfileDrawer)],
+        actions: [
+          AvatarButton(
+            onPressed: _openProfileDrawer,
+            onLogout: () {}, // Triggers UI refresh via ValueListenableBuilder
+          ),
+        ],
       ),
       drawer: const MenuDrawerGrid(),
       endDrawer: const ProfileDrawer(),
