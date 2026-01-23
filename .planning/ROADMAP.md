@@ -14,8 +14,8 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 |-------|------|--------|-------|
 | 1 | Foundation & Authentication | Planning | 4 plans |
 | 2 | Forum Browsing | Pending | - |
-| 3 | Thread Reading | Pending | - |
-| 4 | Replies | Pending | - |
+| 3 | Thread Reading | Planning | 3 plans |
+| 4 | Replies | Planning | 2 plans |
 | 5 | Polish & Performance | Pending | - |
 
 ---
@@ -69,6 +69,12 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 
 **Requirements:** THREAD-01, THREAD-02, THREAD-03, THREAD-04
 
+### Plans
+
+- [ ] 03-01-PLAN.md — Dependencies & Parser Enhancement
+- [ ] 03-02-PLAN.md — Image Display Widgets
+- [ ] 03-03-PLAN.md — Gallery Integration
+
 ### Success Criteria
 
 1. User can tap a thread in the list and see all posts with author info, timestamps, and content.
@@ -85,6 +91,11 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 **Dependencies:** Phase 3 (need thread to reply to)
 
 **Requirements:** REPLY-01, REPLY-02
+
+### Plans
+
+- [ ] 04-01-PLAN.md — Add postReply() method to NgaRepository
+- [ ] 04-02-PLAN.md — Convert ReplyComposer to stateful with submission handling
 
 ### Success Criteria
 
@@ -157,3 +168,5 @@ Five-phase roadmap to deliver a fast, beautiful iOS-native NGA forum client. Pha
 *Roadmap created: 2026-01-23*
 *Phase 1 plans added: 2026-01-23*
 *Plan 01-04 added: 2026-01-23*
+*Phase 4 plans added: 2026-01-23*
+*Phase 3 plans added: 2026-01-23*
