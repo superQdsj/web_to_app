@@ -418,71 +418,66 @@ class ThreadParser {
     String contentText,
   ) {
     final trimmedText = contentText.trimLeft();
-    // 格式1: [quote]...[/quote] 完整引用块
-    final quotePattern = RegExp(
-      r'\[quote\]'
-      r'\[pid=(\d+),(\d+),(\d+)\]Reply\[/pid\]\s*'
-      r'\[b\]Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\):\[/b\]'
-      r'(.*?)'
-      r'\[/quote\]'
-      r'(.*)',
-      dotAll: true,
-    );
+    Match? match;
+    final extractedQuote = _extractQuoteSection(trimmedText);
+    if (extractedQuote != null) {
+      final quoteBody = extractedQuote.quoteBody.trimLeft();
+      final replyContent = extractedQuote.replyContent.trim();
 
-    var match = quotePattern.firstMatch(trimmedText);
-    if (match != null) {
-      final pid = int.tryParse(match.group(1) ?? '');
-      final tid = int.tryParse(match.group(2) ?? '');
-      final authorUid = int.tryParse(match.group(4) ?? '');
-      final authorName = match.group(5)?.trim();
-      final postTime = match.group(6)?.trim();
-      final quotedText = match.group(7)?.trim() ?? '';
-      final replyContent = match.group(8)?.trim() ?? '';
-
-      return (
-        quotedPost: QuotedPost(
-          pid: pid,
-          tid: tid,
-          authorUid: authorUid,
-          authorName: authorName,
-          postTime: postTime,
-          quotedText: quotedText,
-        ),
-        replyContent: replyContent.isNotEmpty ? replyContent : null,
+      final quotePattern = RegExp(
+        r'^\[pid=(\d+),(\d+),(\d+)\]Reply\[/pid\]\s*'
+        r'\[b\]Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\):\[/b\]'
+        r'(.*)$',
+        dotAll: true,
       );
-    }
+      match = quotePattern.firstMatch(quoteBody);
+      if (match != null) {
+        final pid = int.tryParse(match.group(1) ?? '');
+        final tid = int.tryParse(match.group(2) ?? '');
+        final authorUid = int.tryParse(match.group(4) ?? '');
+        final authorName = match.group(5)?.trim();
+        final postTime = match.group(6)?.trim();
+        final quotedText = match.group(7)?.trim() ?? '';
 
-    // 格式2: [quote][tid=xxx]Topic[/tid] ...
-    final quoteTopicPattern = RegExp(
-      r'\[quote\]'
-      r'\[tid=(\d+)\]Topic\[/tid\]\s*'
-      r'\[b\]Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\):\[/b\]'
-      r'(.*?)'
-      r'\[/quote\]'
-      r'(.*)',
-      dotAll: true,
-    );
+        return (
+          quotedPost: QuotedPost(
+            pid: pid,
+            tid: tid,
+            authorUid: authorUid,
+            authorName: authorName,
+            postTime: postTime,
+            quotedText: quotedText,
+          ),
+          replyContent: replyContent.isNotEmpty ? replyContent : null,
+        );
+      }
 
-    match = quoteTopicPattern.firstMatch(trimmedText);
-    if (match != null) {
-      final tid = int.tryParse(match.group(1) ?? '');
-      final authorUid = int.tryParse(match.group(2) ?? '');
-      final authorName = match.group(3)?.trim();
-      final postTime = match.group(4)?.trim();
-      final quotedText = match.group(5)?.trim() ?? '';
-      final replyContent = match.group(6)?.trim() ?? '';
-
-      return (
-        quotedPost: QuotedPost(
-          pid: null,
-          tid: tid,
-          authorUid: authorUid,
-          authorName: authorName,
-          postTime: postTime,
-          quotedText: quotedText,
-        ),
-        replyContent: replyContent.isNotEmpty ? replyContent : null,
+      final quoteTopicPattern = RegExp(
+        r'^\[tid=(\d+)\]Topic\[/tid\]\s*'
+        r'\[b\]Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\):\[/b\]'
+        r'(.*)$',
+        dotAll: true,
       );
+      match = quoteTopicPattern.firstMatch(quoteBody);
+      if (match != null) {
+        final tid = int.tryParse(match.group(1) ?? '');
+        final authorUid = int.tryParse(match.group(2) ?? '');
+        final authorName = match.group(3)?.trim();
+        final postTime = match.group(4)?.trim();
+        final quotedText = match.group(5)?.trim() ?? '';
+
+        return (
+          quotedPost: QuotedPost(
+            pid: null,
+            tid: tid,
+            authorUid: authorUid,
+            authorName: authorName,
+            postTime: postTime,
+            quotedText: quotedText,
+          ),
+          replyContent: replyContent.isNotEmpty ? replyContent : null,
+        );
+      }
     }
 
     // 格式3/4: [b]Reply to ...[/b] 简短引用格式
@@ -519,5 +514,44 @@ class ThreadParser {
 
     // 没有引用
     return (quotedPost: null, replyContent: null);
+  }
+
+  static ({String quoteBody, String replyContent})? _extractQuoteSection(
+    String text,
+  ) {
+    const openTag = '[quote]';
+    const closeTag = '[/quote]';
+    final start = text.indexOf(openTag);
+    if (start == -1) return null;
+    final end = _findMatchingQuoteEnd(text, start + openTag.length);
+    if (end == null) return null;
+    final quoteBody = text.substring(start + openTag.length, end);
+    final before = text.substring(0, start).trim();
+    final after = text.substring(end + closeTag.length).trim();
+    final replyContent = [before, after]
+        .where((part) => part.isNotEmpty)
+        .join('\n');
+    return (quoteBody: quoteBody, replyContent: replyContent);
+  }
+
+  static int? _findMatchingQuoteEnd(String text, int startIndex) {
+    const openTag = '[quote]';
+    const closeTag = '[/quote]';
+    var depth = 1;
+    var cursor = startIndex;
+    while (cursor < text.length) {
+      final nextOpen = text.indexOf(openTag, cursor);
+      final nextClose = text.indexOf(closeTag, cursor);
+      if (nextClose == -1) return null;
+      if (nextOpen != -1 && nextOpen < nextClose) {
+        depth += 1;
+        cursor = nextOpen + openTag.length;
+        continue;
+      }
+      depth -= 1;
+      if (depth == 0) return nextClose;
+      cursor = nextClose + closeTag.length;
+    }
+    return null;
   }
 }

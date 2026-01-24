@@ -64,7 +64,7 @@ class NgaRepository {
     }
 
     final htmlText = _decodeResponse(resp);
-
+    
     final fetchedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final detail = ThreadParser().parseThreadPage(
       htmlText,
