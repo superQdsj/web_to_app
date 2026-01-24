@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../data/nga_rich_repository.dart';
 import '../src/auth/nga_cookie_store.dart';
 import '../src/model/thread_rich_detail.dart';
 import '../src/parser/thread_rich_quote_resolver.dart';
+import '../src/services/emoji_service.dart';
 import '../theme/app_colors.dart';
 
 class ThreadRichScreen extends StatefulWidget {
@@ -43,7 +45,21 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
     super.initState();
     _repository = NgaRichRepository(cookie: _cookie);
     NgaCookieStore.cookie.addListener(_onCookieChanged);
+    _loadEmojiMap();
     _refreshThread();
+  }
+
+  Future<void> _loadEmojiMap() async {
+    if (EmojiService.isLoaded) {
+      return;
+    }
+    try {
+      await EmojiService.ensureLoaded();
+      if (!mounted) return;
+      setState(() {});
+    } catch (_) {
+      // Ignore emoji loading errors; fallback to placeholder.
+    }
   }
 
   @override
@@ -596,10 +612,15 @@ class _ParagraphBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.ngaColors;
+    final baseStyle = TextStyle(
+      color: colors.textPrimary,
+      fontSize: 15,
+      height: 1.4,
+    );
     return RichText(
       text: TextSpan(
-        style: TextStyle(color: colors.textPrimary, fontSize: 15, height: 1.4),
-        children: _buildInlineSpans(context, spans),
+        style: baseStyle,
+        children: _buildInlineSpans(context, spans, baseStyle: baseStyle),
       ),
     );
   }
@@ -701,7 +722,11 @@ class _QuoteContent extends StatelessWidget {
       return RichText(
         text: TextSpan(
           style: textStyle,
-          children: _buildInlineSpans(context, block.spans),
+          children: _buildInlineSpans(
+            context,
+            block.spans,
+            baseStyle: textStyle,
+          ),
         ),
       );
     }
@@ -753,38 +778,243 @@ class _ImageBlock extends StatelessWidget {
 List<InlineSpan> _buildInlineSpans(
   BuildContext context,
   List<ThreadInlineNode> nodes,
+  {required TextStyle baseStyle,}
 ) {
-  final colors = context.ngaColors;
   final spans = <InlineSpan>[];
   for (final node in nodes) {
     if (node is ThreadTextNode) {
-      spans.add(
-        TextSpan(
-          text: node.text,
-          style: TextStyle(
-            fontWeight: node.bold ? FontWeight.w600 : FontWeight.normal,
-            decoration: node.deleted ? TextDecoration.lineThrough : null,
-          ),
-        ),
-      );
+      spans.addAll(_buildTextNodeSpans(context, node, baseStyle: baseStyle));
     } else if (node is ThreadEmoteNode) {
-      spans.add(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              color: colors.postBackgroundSecondary,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: colors.border),
-            ),
-            child: Icon(Icons.tag_faces, size: 12, color: colors.textMuted),
-          ),
-        ),
-      );
+      spans.add(_buildEmojiSpan(context, node.code, baseStyle: baseStyle));
     }
   }
   return spans;
+}
+
+final RegExp _inlineTokenPattern = RegExp(
+  r'\[url(?:=[^\]]+)?\].*?\[/url\]|\[s:[^\]]+\]',
+  caseSensitive: false,
+  dotAll: true,
+);
+
+final RegExp _urlTagPattern = RegExp(
+  r'^\[url(?:=([^\]]+))?\](.*?)\[/url\]$',
+  caseSensitive: false,
+  dotAll: true,
+);
+
+List<InlineSpan> _buildTextNodeSpans(
+  BuildContext context,
+  ThreadTextNode node, {
+  required TextStyle baseStyle,
+}) {
+  final spans = <InlineSpan>[];
+  final text = node.text;
+
+  final nodeStyle = TextStyle(
+    fontWeight: node.bold ? FontWeight.w600 : FontWeight.normal,
+    decoration: node.deleted ? TextDecoration.lineThrough : null,
+  );
+
+  void flush(String chunk) {
+    if (chunk.isEmpty) return;
+    spans.add(TextSpan(text: chunk, style: nodeStyle));
+  }
+
+  var cursor = 0;
+  for (final match in _inlineTokenPattern.allMatches(text)) {
+    if (match.start > cursor) {
+      flush(text.substring(cursor, match.start));
+    }
+
+    final token = match.group(0) ?? '';
+    if (token.isEmpty) {
+      cursor = match.end;
+      continue;
+    }
+
+    final lower = token.toLowerCase();
+    if (lower.startsWith('[s:')) {
+      spans.add(_buildEmojiSpan(context, token, baseStyle: baseStyle));
+      cursor = match.end;
+      continue;
+    }
+
+    if (lower.startsWith('[url')) {
+      final urlMatch = _urlTagPattern.firstMatch(token);
+      if (urlMatch == null) {
+        flush(token);
+        cursor = match.end;
+        continue;
+      }
+
+      final attrUrl = (urlMatch.group(1) ?? '').trim();
+      final innerText = (urlMatch.group(2) ?? '').trim();
+      final href = (attrUrl.isNotEmpty ? attrUrl : innerText).trim();
+      final label = innerText.isNotEmpty ? innerText : href;
+
+      if (href.isEmpty) {
+        flush(token);
+        cursor = match.end;
+        continue;
+      }
+
+      spans.add(
+        _buildLinkSpan(
+          context,
+          label: label,
+          href: href,
+          baseStyle: baseStyle,
+          bold: node.bold,
+          deleted: node.deleted,
+        ),
+      );
+      cursor = match.end;
+      continue;
+    }
+
+    flush(token);
+    cursor = match.end;
+  }
+
+  if (cursor < text.length) {
+    flush(text.substring(cursor));
+  }
+  return spans;
+}
+
+InlineSpan _buildLinkSpan(
+  BuildContext context, {
+  required String label,
+  required String href,
+  required TextStyle baseStyle,
+  required bool bold,
+  required bool deleted,
+}) {
+  final colors = context.ngaColors;
+  final normalized = _normalizeExternalUrl(href);
+
+  final decoration = deleted
+      ? TextDecoration.combine(
+          const [TextDecoration.lineThrough, TextDecoration.underline],
+        )
+      : TextDecoration.underline;
+
+  final linkStyle = baseStyle.copyWith(
+    color: colors.link,
+    fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
+    decoration: decoration,
+  );
+
+  return WidgetSpan(
+    alignment: PlaceholderAlignment.baseline,
+    baseline: TextBaseline.alphabetic,
+    child: GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: normalized == null
+          ? null
+          : () => _launchExternalUrl(context, normalized),
+      child: Text(label, style: linkStyle),
+    ),
+  );
+}
+
+InlineSpan _buildEmojiSpan(
+  BuildContext context,
+  String code, {
+  required TextStyle baseStyle,
+}) {
+  final colors = context.ngaColors;
+  final baseFontSize = baseStyle.fontSize ?? 14;
+  final size = (baseFontSize + 3).clamp(16.0, 20.0);
+
+  final url = EmojiService.resolve(code);
+  if (url == null) {
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: colors.postBackgroundSecondary,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: colors.border),
+        ),
+        child: Icon(Icons.tag_faces, size: size * 0.66, color: colors.textMuted),
+      ),
+    );
+  }
+
+  return WidgetSpan(
+    alignment: PlaceholderAlignment.middle,
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      width: size,
+      height: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
+      child: CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.contain,
+        placeholder: (context, _) => Container(
+          color: colors.postBackgroundSecondary,
+        ),
+        errorWidget: (context, _, _) => Container(
+          color: colors.postBackgroundSecondary,
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.broken_image,
+            size: size * 0.66,
+            color: colors.textMuted,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+String? _normalizeExternalUrl(String input) {
+  var trimmed = input.trim();
+  if (trimmed.isEmpty) return null;
+  if (trimmed.startsWith('//')) {
+    trimmed = 'https:$trimmed';
+  }
+  var uri = Uri.tryParse(trimmed);
+  if (uri == null) return null;
+  if (!uri.hasScheme) {
+    trimmed = 'https://$trimmed';
+    uri = Uri.tryParse(trimmed);
+    if (uri == null) return null;
+  }
+  final scheme = uri.scheme.toLowerCase();
+  if (scheme != 'http' && scheme != 'https') {
+    return null;
+  }
+  return uri.toString();
+}
+
+Future<void> _launchExternalUrl(BuildContext context, String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Invalid url: $url')));
+    return;
+  }
+
+  try {
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Open failed: $url')));
+    }
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Open failed: $e')));
+  }
 }
