@@ -83,6 +83,9 @@ class ThreadParser {
       final postDateEl = row.querySelector('[id^=postdate]');
       final postDate = postDateEl?.text.trim();
 
+      // 解析引用信息
+      final quoteResult = parseQuote(contentText);
+
       posts.add(
         ThreadPost(
           pid: pid,
@@ -92,6 +95,8 @@ class ThreadParser {
           contentText: contentText,
           deviceType: deviceType,
           postDate: postDate,
+          quotedPost: quoteResult.quotedPost,
+          replyContent: quoteResult.replyContent,
         ),
       );
     }
@@ -131,6 +136,9 @@ class ThreadParser {
       // In legacy parser, try to find postdate
       final postDate = table?.querySelector('[id^=postdate]')?.text.trim();
 
+      // 解析引用信息
+      final quoteResult = parseQuote(contentText);
+
       posts.add(
         ThreadPost(
           pid: pid,
@@ -139,6 +147,8 @@ class ThreadParser {
           authorUid: authorUid,
           contentText: contentText,
           postDate: postDate,
+          quotedPost: quoteResult.quotedPost,
+          replyContent: quoteResult.replyContent,
         ),
       );
     }
@@ -349,5 +359,165 @@ class ThreadParser {
       current = current.parent;
     }
     return null;
+  }
+
+  /// 后处理：对于格式2的引用（quotedText为空），根据PID从已解析的帖子中查找原文
+  ///
+  /// 格式2 ([b]Reply to...[/b]) 不包含被引用的文本，需要从同页面的帖子中查找
+  static List<ThreadPost> fillQuotedTextFromPosts(List<ThreadPost> posts) {
+    // 构建 PID -> 帖子内容 的映射
+    final pidToContent = <int, String>{};
+    for (final post in posts) {
+      if (post.pid != null) {
+        // 使用 replyContent（如果有）或 contentText，去掉引用部分
+        final content = post.replyContent ?? post.contentText;
+        pidToContent[post.pid!] = content;
+      }
+    }
+
+    // 遍历帖子，填充空的 quotedText
+    return posts.map((post) {
+      final quoted = post.quotedPost;
+      // 如果有引用但 quotedText 为空，尝试从 PID 映射中查找
+      if (quoted != null &&
+          quoted.quotedText.isEmpty &&
+          quoted.pid != null &&
+          pidToContent.containsKey(quoted.pid)) {
+        final originalContent = pidToContent[quoted.pid]!;
+        return ThreadPost(
+          pid: post.pid,
+          floor: post.floor,
+          author: post.author,
+          authorUid: post.authorUid,
+          contentText: post.contentText,
+          deviceType: post.deviceType,
+          postDate: post.postDate,
+          quotedPost: QuotedPost(
+            pid: quoted.pid,
+            tid: quoted.tid,
+            authorUid: quoted.authorUid,
+            authorName: quoted.authorName,
+            postTime: quoted.postTime,
+            quotedText: originalContent,
+          ),
+          replyContent: post.replyContent,
+        );
+      }
+      return post;
+    }).toList();
+  }
+
+  /// 解析帖子内容中的引用信息
+  ///
+  /// 支持格式：
+  /// 1. [quote][pid=xxx,tid,page]Reply[/pid] [b]Post by [uid=xxx]Username[/uid] (time):[/b]引用内容[/quote]回复内容
+  /// 2. [quote][tid=xxx]Topic[/tid] [b]Post by [uid=xxx]Username[/uid] (time):[/b]引用内容[/quote]回复内容
+  /// 3. [b]Reply to [pid=xxx,tid,page]Reply[/pid] Post by [uid=xxx]Username[/uid] (time)[/b]回复内容
+  /// 4. [b]Reply to [pid=xxx,tid,page]Reply[/pid] Post by [uid=xxx]Username[/uid] (time)回复内容[/b]
+  static ({QuotedPost? quotedPost, String? replyContent}) parseQuote(
+    String contentText,
+  ) {
+    final trimmedText = contentText.trimLeft();
+    // 格式1: [quote]...[/quote] 完整引用块
+    final quotePattern = RegExp(
+      r'\[quote\]'
+      r'\[pid=(\d+),(\d+),(\d+)\]Reply\[/pid\]\s*'
+      r'\[b\]Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\):\[/b\]'
+      r'(.*?)'
+      r'\[/quote\]'
+      r'(.*)',
+      dotAll: true,
+    );
+
+    var match = quotePattern.firstMatch(trimmedText);
+    if (match != null) {
+      final pid = int.tryParse(match.group(1) ?? '');
+      final tid = int.tryParse(match.group(2) ?? '');
+      final authorUid = int.tryParse(match.group(4) ?? '');
+      final authorName = match.group(5)?.trim();
+      final postTime = match.group(6)?.trim();
+      final quotedText = match.group(7)?.trim() ?? '';
+      final replyContent = match.group(8)?.trim() ?? '';
+
+      return (
+        quotedPost: QuotedPost(
+          pid: pid,
+          tid: tid,
+          authorUid: authorUid,
+          authorName: authorName,
+          postTime: postTime,
+          quotedText: quotedText,
+        ),
+        replyContent: replyContent.isNotEmpty ? replyContent : null,
+      );
+    }
+
+    // 格式2: [quote][tid=xxx]Topic[/tid] ...
+    final quoteTopicPattern = RegExp(
+      r'\[quote\]'
+      r'\[tid=(\d+)\]Topic\[/tid\]\s*'
+      r'\[b\]Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\):\[/b\]'
+      r'(.*?)'
+      r'\[/quote\]'
+      r'(.*)',
+      dotAll: true,
+    );
+
+    match = quoteTopicPattern.firstMatch(trimmedText);
+    if (match != null) {
+      final tid = int.tryParse(match.group(1) ?? '');
+      final authorUid = int.tryParse(match.group(2) ?? '');
+      final authorName = match.group(3)?.trim();
+      final postTime = match.group(4)?.trim();
+      final quotedText = match.group(5)?.trim() ?? '';
+      final replyContent = match.group(6)?.trim() ?? '';
+
+      return (
+        quotedPost: QuotedPost(
+          pid: null,
+          tid: tid,
+          authorUid: authorUid,
+          authorName: authorName,
+          postTime: postTime,
+          quotedText: quotedText,
+        ),
+        replyContent: replyContent.isNotEmpty ? replyContent : null,
+      );
+    }
+
+    // 格式3/4: [b]Reply to ...[/b] 简短引用格式
+    final replyToPattern = RegExp(
+      r'^\[b\]Reply to \[pid=(\d+),(\d+),(\d+)\]Reply\[/pid\]\s*'
+      r'Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\)',
+      dotAll: true,
+    );
+
+    match = replyToPattern.firstMatch(trimmedText);
+    if (match != null) {
+      final pid = int.tryParse(match.group(1) ?? '');
+      final tid = int.tryParse(match.group(2) ?? '');
+      final authorUid = int.tryParse(match.group(4) ?? '');
+      final authorName = match.group(5)?.trim();
+      final postTime = match.group(6)?.trim();
+
+      var replyContent = trimmedText.substring(match.end).trim();
+      replyContent = replyContent.replaceFirst(RegExp(r'^\s*\[/b\]\s*'), '');
+      replyContent = replyContent.replaceFirst(RegExp(r'\s*\[/b\]\s*$'), '');
+
+      return (
+        quotedPost: QuotedPost(
+          pid: pid,
+          tid: tid,
+          authorUid: authorUid,
+          authorName: authorName,
+          postTime: postTime,
+          quotedText: '', // Reply to 格式没有引用内容
+        ),
+        replyContent: replyContent.isNotEmpty ? replyContent : null,
+      );
+    }
+
+    // 没有引用
+    return (quotedPost: null, replyContent: null);
   }
 }

@@ -1,5 +1,117 @@
 part of '../thread_screen.dart';
 
+/// 引用块组件
+///
+/// 左侧带紫色装饰条的引用样式，用于显示回复引用的内容
+class _QuoteBlock extends StatefulWidget {
+  const _QuoteBlock({required this.quotedPost});
+
+  final QuotedPost quotedPost;
+
+  @override
+  State<_QuoteBlock> createState() => _QuoteBlockState();
+}
+
+class _QuoteBlockState extends State<_QuoteBlock> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final authorName = widget.quotedPost.authorName ?? 'Anonymous';
+    final hasQuotedText = widget.quotedPost.quotedText.isNotEmpty;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: _ThreadPalette.quoteBackground,
+        borderRadius: BorderRadius.circular(8),
+        border: const Border(
+          left: BorderSide(color: _ThreadPalette.quoteAccent, width: 4),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 作者行：Username wrote:
+            Text(
+              '$authorName wrote:',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: _ThreadPalette.quoteAuthor,
+              ),
+            ),
+            if (hasQuotedText) ...[
+              const SizedBox(height: 4),
+              // 引用内容（斜体+引号）带展开/收起功能
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const textStyle = TextStyle(
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: _ThreadPalette.quoteText,
+                    height: 1.4,
+                  );
+                  final text = '"${widget.quotedPost.quotedText}"';
+                  final textSpan = TextSpan(text: text, style: textStyle);
+                  final textPainter = TextPainter(
+                    text: textSpan,
+                    maxLines: 3,
+                    textDirection: TextDirection.ltr,
+                  );
+                  textPainter.layout(maxWidth: constraints.maxWidth);
+                  final exceedsMaxLines = textPainter.didExceedMaxLines;
+                  textPainter.dispose();
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        text,
+                        style: textStyle,
+                        maxLines: _isExpanded ? null : 3,
+                        overflow: _isExpanded ? null : TextOverflow.ellipsis,
+                      ),
+                      if (exceedsMaxLines)
+                        GestureDetector(
+                          onTap: () =>
+                              setState(() => _isExpanded = !_isExpanded),
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              _isExpanded ? '收起' : '展开',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: _ThreadPalette.quoteAuthor,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ] else ...[
+              const SizedBox(height: 4),
+              const Text(
+                '(查看原帖)',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: _ThreadPalette.textSecondary,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ReplyCard extends StatelessWidget {
   const _ReplyCard({required this.post});
 
@@ -9,6 +121,8 @@ class _ReplyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final authorLabel = post.author?.username ?? 'Anonymous';
     final timeLabel = post.floor != null ? '#${post.floor}' : 'Just now';
+    // 如果有引用，显示回复内容；否则显示原始内容
+    final displayContent = post.replyContent ?? post.contentText;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -18,6 +132,7 @@ class _ReplyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,10 +172,13 @@ class _ReplyCard extends StatelessWidget {
               if (post.postDate != null) _PostDateDisplay(date: post.postDate!),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
+          // 引用块（如果有）
+          if (post.quotedPost != null)
+            _QuoteBlock(quotedPost: post.quotedPost!),
           // Content
           Text(
-            post.contentText,
+            displayContent,
             style: const TextStyle(
               fontSize: 13,
               height: 1.5,
@@ -84,6 +202,8 @@ class _ReplyTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final authorLabel = post.author?.username ?? 'Anonymous';
     final timeLabel = post.floor != null ? '#${post.floor}' : 'Just now';
+    // 如果有引用，显示回复内容；否则显示原始内容
+    final displayContent = post.replyContent ?? post.contentText;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -129,10 +249,13 @@ class _ReplyTile extends StatelessWidget {
               if (post.postDate != null) _PostDateDisplay(date: post.postDate!),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
+          // 引用块（如果有）
+          if (post.quotedPost != null)
+            _QuoteBlock(quotedPost: post.quotedPost!),
           // Content
           Text(
-            post.contentText,
+            displayContent,
             style: const TextStyle(
               fontSize: 14,
               height: 1.5,

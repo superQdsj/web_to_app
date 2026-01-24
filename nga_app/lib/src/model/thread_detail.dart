@@ -1,3 +1,31 @@
+/// 引用的帖子信息
+class QuotedPost {
+  QuotedPost({
+    this.pid,
+    this.tid,
+    this.authorUid,
+    this.authorName,
+    this.postTime,
+    required this.quotedText,
+  });
+
+  final int? pid;
+  final int? tid;
+  final int? authorUid;
+  final String? authorName;
+  final String? postTime;
+  final String quotedText;
+
+  Map<String, Object?> toJson() => {
+    'pid': pid,
+    'tid': tid,
+    'author_uid': authorUid,
+    'author_name': authorName,
+    'post_time': postTime,
+    'quoted_text': quotedText,
+  };
+}
+
 class ThreadPost {
   ThreadPost({
     this.pid,
@@ -7,6 +35,8 @@ class ThreadPost {
     required this.contentText,
     this.deviceType,
     this.postDate,
+    this.quotedPost,
+    this.replyContent,
   });
 
   final int? pid;
@@ -17,6 +47,12 @@ class ThreadPost {
   final String? deviceType;
   final String? postDate;
 
+  /// 被引用的帖子（如果这是一个回复帖）
+  final QuotedPost? quotedPost;
+
+  /// 回复内容（去掉引用后的纯回复文本）
+  final String? replyContent;
+
   Map<String, Object?> toJson() => {
     'pid': pid,
     'floor': floor,
@@ -25,6 +61,8 @@ class ThreadPost {
     'content_text': contentText,
     'device_type': deviceType,
     'post_date': postDate,
+    'quoted_post': quotedPost?.toJson(),
+    'reply_content': replyContent,
   };
 }
 

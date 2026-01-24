@@ -19,4 +19,17 @@ class _ThreadPalette {
   // 第三级文字颜色（时间戳等辅助信息）
   static const Color textTertiary = Color(0xFF8A7B5A);
   static const Color primary = Color(0xFF1337EC);
+
+  // 引用块样式
+  /// 引用块背景色（浅米黄）
+  static const Color quoteBackground = Color(0xFFFFF9EB);
+
+  /// 引用块左侧装饰条颜色（淡紫色）
+  static const Color quoteAccent = Color(0xFF9FA8DA);
+
+  /// 引用文字颜色（较浅的褐色）
+  static const Color quoteText = Color(0xFF795548);
+
+  /// 引用作者名颜色（深褐色）
+  static const Color quoteAuthor = Color(0xFF5D4037);
 }

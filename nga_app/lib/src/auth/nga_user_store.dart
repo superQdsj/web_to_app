@@ -17,7 +17,9 @@ class NgaUserInfo {
   /// Parse from login success JSON (from NGA login page console.log).
   static NgaUserInfo? tryFromLoginSuccessJson(dynamic json) {
     if (json is! Map) {
-      _log('tryFromLoginSuccessJson: json is not a Map, got ${json.runtimeType}');
+      _log(
+        'tryFromLoginSuccessJson: json is not a Map, got ${json.runtimeType}',
+      );
       return null;
     }
 
@@ -87,7 +89,10 @@ class NgaUserStore {
   static bool get hasUser => user.value != null;
 
   /// Set user and optionally save to storage.
-  static Future<void> setUser(NgaUserInfo? newUser, {bool persist = true}) async {
+  static Future<void> setUser(
+    NgaUserInfo? newUser, {
+    bool persist = true,
+  }) async {
     final oldUser = user.value;
     user.value = newUser;
 
@@ -125,7 +130,9 @@ class NgaUserStore {
 
       if (userInfo != null) {
         user.value = userInfo;
-        _log('loadFromStorage: loaded user ${userInfo.username} (uid=${userInfo.uid})');
+        _log(
+          'loadFromStorage: loaded user ${userInfo.username} (uid=${userInfo.uid})',
+        );
       } else {
         _log('loadFromStorage: failed to parse saved user info');
       }

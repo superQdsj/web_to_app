@@ -92,8 +92,7 @@ class _AvatarButtonState extends State<AvatarButton> {
                   backgroundColor: user != null
                       ? theme.colorScheme.primaryContainer
                       : theme.colorScheme.surfaceContainerHighest,
-                  foregroundImage:
-                      hasAvatar ? NetworkImage(avatarUrl) : null,
+                  foregroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
                   child: !hasAvatar
                       ? Icon(
                           user != null ? Icons.person : Icons.person_outline,

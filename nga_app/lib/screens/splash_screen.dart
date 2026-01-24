@@ -32,9 +32,9 @@ class _SplashScreenState extends State<SplashScreen> {
     if (!mounted) return;
 
     // Navigate to HomeScreen, replacing the splash screen
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
   }
 
   @override
@@ -57,9 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
             SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
           ],
         ),

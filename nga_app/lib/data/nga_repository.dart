@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import '../src/nga_fetcher.dart';
 
 /// Repository for fetching NGA forum data.
@@ -63,6 +64,7 @@ class NgaRepository {
     }
 
     final htmlText = _decodeResponse(resp);
+
     final fetchedAt = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final detail = ThreadParser().parseThreadPage(
       htmlText,

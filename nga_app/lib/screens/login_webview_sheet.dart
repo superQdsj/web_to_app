@@ -49,7 +49,9 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
     // Debug: log all cookie name=value pairs
     if (kDebugMode) {
       for (final cookie in cookies) {
-        debugPrint('[NGA][LoginWebView] Cookie: ${cookie.name}=${cookie.value}');
+        debugPrint(
+          '[NGA][LoginWebView] Cookie: ${cookie.name}=${cookie.value}',
+        );
       }
     }
 
@@ -58,11 +60,14 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
         final uid = int.tryParse(cookie.value) ?? 0;
         final isValid = uid > 0;
         debugPrint(
-            '[NGA][LoginWebView] _looksLikeLoginCookie: ngaPassportUid=$uid isValid=$isValid');
+          '[NGA][LoginWebView] _looksLikeLoginCookie: ngaPassportUid=$uid isValid=$isValid',
+        );
         return isValid; // Real user has positive uid
       }
     }
-    debugPrint('[NGA][LoginWebView] _looksLikeLoginCookie: ngaPassportUid not found');
+    debugPrint(
+      '[NGA][LoginWebView] _looksLikeLoginCookie: ngaPassportUid not found',
+    );
     return false;
   }
 
@@ -102,7 +107,8 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
 
     _autoCaptured = true;
     debugPrint(
-        '[NGA][LoginWebView] applyCookieAndClose($reason) len=${cookieHeaderValue.length}');
+      '[NGA][LoginWebView] applyCookieAndClose($reason) len=${cookieHeaderValue.length}',
+    );
     NgaCookieStore.setCookie(cookieHeaderValue);
     await NgaCookieStore.saveToStorage();
 
@@ -361,9 +367,9 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.outlineVariant.withValues(
-            alpha: 0.6,
-          ),
+          color: Theme.of(
+            context,
+          ).colorScheme.outlineVariant.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -436,10 +442,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
           IconButton(
             tooltip: '关闭',
             onPressed: () => Navigator.of(context).pop(false),
-            icon: Icon(
-              Icons.close,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -488,10 +491,7 @@ class _LoginWebViewSheetState extends State<LoginWebViewSheet>
           IconButton(
             tooltip: '刷新',
             onPressed: _reload,
-            icon: Icon(
-              Icons.refresh,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            icon: Icon(Icons.refresh, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(width: 4),
           FilledButton.tonal(

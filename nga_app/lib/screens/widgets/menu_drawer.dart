@@ -77,10 +77,11 @@ class _MenuDrawerState extends State<MenuDrawer> {
           // Background layers for glass-morphism effect
           Positioned.fill(
             child: Container(
-              color: (theme.brightness == Brightness.light
-                      ? _backgroundLight
-                      : const Color(0xFF1C1C1E))
-                  .withValues(alpha: 0.95),
+              color:
+                  (theme.brightness == Brightness.light
+                          ? _backgroundLight
+                          : const Color(0xFF1C1C1E))
+                      .withValues(alpha: 0.95),
             ),
           ),
           // Subtle glow spots
@@ -120,10 +121,11 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 ),
                 border: Border(
                   right: BorderSide(
-                    color: (theme.brightness == Brightness.light
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.1))
-                        .withValues(alpha: 0.3),
+                    color:
+                        (theme.brightness == Brightness.light
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.1))
+                            .withValues(alpha: 0.3),
                     width: 0.5,
                   ),
                 ),
@@ -140,12 +142,12 @@ class _MenuDrawerState extends State<MenuDrawer> {
                   child: FutureBuilder<List<ForumCategory>>(
                     future: _categoriesFuture,
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(
-                            child: CircularProgressIndicator(
-                          color: _primaryColor,
-                        ));
+                          child: CircularProgressIndicator(
+                            color: _primaryColor,
+                          ),
+                        );
                       }
 
                       if (snapshot.hasError) {
@@ -203,8 +205,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
                             const SizedBox(height: 8),
                             _buildQuickActionsGrid(context),
                             const SizedBox(height: 24),
-                            ...categories.map((category) =>
-                                _buildForumCategory(context, category)),
+                            ...categories.map(
+                              (category) =>
+                                  _buildForumCategory(context, category),
+                            ),
                             const SizedBox(height: 100),
                           ],
                         ),
@@ -218,11 +222,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
           ),
 
           // Search FAB
-          Positioned(
-            bottom: 100,
-            right: 16,
-            child: _buildSearchFab(context),
-          ),
+          Positioned(bottom: 100, right: 16, child: _buildSearchFab(context)),
         ],
       ),
     );
@@ -344,15 +344,16 @@ class _MenuDrawerState extends State<MenuDrawer> {
       duration: const Duration(milliseconds: 200),
       height: 72,
       decoration: BoxDecoration(
-        color: (isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.white.withValues(alpha: 0.6))
-            .withValues(alpha: 0.8),
+        color:
+            (isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.white.withValues(alpha: 0.6))
+                .withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: (isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.white.withValues(alpha: 0.5)),
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.white.withValues(alpha: 0.5)),
           width: 1,
         ),
         boxShadow: [
@@ -373,7 +374,8 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 duration: const Duration(seconds: 1),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             );
           },
@@ -388,7 +390,9 @@ class _MenuDrawerState extends State<MenuDrawer> {
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
-                  color: isDark ? Colors.white.withValues(alpha: 0.9) : _textMain,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : _textMain,
                 ),
               ),
             ],
@@ -461,17 +465,15 @@ class _MenuDrawerState extends State<MenuDrawer> {
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: (isDark
-                    ? const Color(0xFF2C2C2E)
-                    : _surfaceLight)
+            color: (isDark ? const Color(0xFF2C2C2E) : _surfaceLight)
                 .withValues(alpha: isActive ? 0.95 : 0.7),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isActive
                   ? _primaryColor.withValues(alpha: 0.3)
                   : (isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.white.withValues(alpha: 0.4)),
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.white.withValues(alpha: 0.4)),
               width: isActive ? 1.5 : 1,
             ),
             boxShadow: [
@@ -492,7 +494,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
               },
               borderRadius: BorderRadius.circular(16),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     // Icon container
@@ -511,9 +516,7 @@ class _MenuDrawerState extends State<MenuDrawer> {
                                   ? FontWeight.w700
                                   : FontWeight.w600,
                               fontSize: 16,
-                              color: isDark
-                                  ? Colors.white
-                                  : _textMain,
+                              color: isDark ? Colors.white : _textMain,
                             ),
                           ),
                           if (board.info != null && board.info!.isNotEmpty)
@@ -545,8 +548,8 @@ class _MenuDrawerState extends State<MenuDrawer> {
                         color: isActive
                             ? _primaryColor
                             : (isDark
-                                ? Colors.white.withValues(alpha: 0.3)
-                                : _textSub.withValues(alpha: 0.4)),
+                                  ? Colors.white.withValues(alpha: 0.3)
+                                  : _textSub.withValues(alpha: 0.4)),
                       ),
                     ),
                   ],
@@ -574,18 +577,12 @@ class _MenuDrawerState extends State<MenuDrawer> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: (isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.white.withValues(alpha: 0.5)),
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.white.withValues(alpha: 0.5)),
           width: 1,
         ),
       ),
-      child: Center(
-        child: Icon(
-          icon,
-          color: iconColor,
-          size: 22,
-        ),
-      ),
+      child: Center(child: Icon(icon, color: iconColor, size: 22)),
     );
   }
 
@@ -598,91 +595,91 @@ class _MenuDrawerState extends State<MenuDrawer> {
       return (
         Icons.self_improvement_rounded,
         _classColors['monk']!,
-        _classIconColors['monk']!
+        _classIconColors['monk']!,
       );
     }
     if (lowerName.contains('黑锋') || lowerName.contains('死亡骑士')) {
       return (
         Icons.coronavirus_rounded,
         _classColors['death_knight']!,
-        _classIconColors['death_knight']!
+        _classIconColors['death_knight']!,
       );
     }
     if (lowerName.contains('铁血') || lowerName.contains('战士')) {
       return (
         Icons.shield_rounded,
         _classColors['warrior']!,
-        _classIconColors['warrior']!
+        _classIconColors['warrior']!,
       );
     }
     if (lowerName.contains('魔法') || lowerName.contains('法师')) {
       return (
         Icons.auto_fix_high_rounded,
         _classColors['mage']!,
-        _classIconColors['mage']!
+        _classIconColors['mage']!,
       );
     }
     if (lowerName.contains('信仰') || lowerName.contains('牧师')) {
       return (
         Icons.health_and_safety_rounded,
         _classColors['priest']!,
-        _classIconColors['priest']!
+        _classIconColors['priest']!,
       );
     }
     if (lowerName.contains('风暴') || lowerName.contains('萨满')) {
       return (
         Icons.flash_on_rounded,
         _classColors['shaman']!,
-        _classIconColors['shaman']!
+        _classIconColors['shaman']!,
       );
     }
     if (lowerName.contains('翡翠') || lowerName.contains('德鲁伊')) {
       return (
         Icons.eco_rounded,
         _classColors['druid']!,
-        _classIconColors['druid']!
+        _classIconColors['druid']!,
       );
     }
     if (lowerName.contains('猎手') || lowerName.contains('猎人')) {
       return (
         Icons.pets_rounded,
         _classColors['hunter']!,
-        _classIconColors['hunter']!
+        _classIconColors['hunter']!,
       );
     }
     if (lowerName.contains('圣光') || lowerName.contains('圣骑士')) {
       return (
         Icons.shield_moon_rounded,
         _classColors['paladin']!,
-        _classIconColors['paladin']!
+        _classIconColors['paladin']!,
       );
     }
     if (lowerName.contains('恶魔') && lowerName.contains('术士')) {
       return (
         Icons.cloud_rounded,
         _classColors['warlock']!,
-        _classIconColors['warlock']!
+        _classIconColors['warlock']!,
       );
     }
     if (lowerName.contains('暗影') || lowerName.contains('盗贼')) {
       return (
         Icons.visibility_off_rounded,
         _classColors['rogue']!,
-        _classIconColors['rogue']!
+        _classIconColors['rogue']!,
       );
     }
     if (lowerName.contains('伊利达雷') || lowerName.contains('恶魔猎手')) {
       return (
         Icons.flash_off_rounded,
         _classColors['demon_hunter']!,
-        _classIconColors['demon_hunter']!
+        _classIconColors['demon_hunter']!,
       );
     }
     if (lowerName.contains('巨龙') || lowerName.contains('唤魔师')) {
       return (
         Icons.auto_awesome_rounded,
         _classColors['evoker']!,
-        _classIconColors['evoker']!
+        _classIconColors['evoker']!,
       );
     }
 
@@ -705,17 +702,19 @@ class _MenuDrawerState extends State<MenuDrawer> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            (isDark ? const Color(0xFF1C1C1E) : _backgroundLight)
-                .withValues(alpha: 0),
-            (isDark ? const Color(0xFF1C1C1E) : _backgroundLight)
-                .withValues(alpha: 1),
+            (isDark ? const Color(0xFF1C1C1E) : _backgroundLight).withValues(
+              alpha: 0,
+            ),
+            (isDark ? const Color(0xFF1C1C1E) : _backgroundLight).withValues(
+              alpha: 1,
+            ),
           ],
         ),
         border: Border(
           top: BorderSide(
             color: (isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05)),
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.05)),
           ),
         ),
       ),
@@ -726,7 +725,10 @@ class _MenuDrawerState extends State<MenuDrawer> {
             height: 40,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [_primaryColor.withValues(alpha: 0.1), _primaryDarkColor.withValues(alpha: 0.1)],
+                colors: [
+                  _primaryColor.withValues(alpha: 0.1),
+                  _primaryDarkColor.withValues(alpha: 0.1),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -796,13 +798,8 @@ class _MenuDrawerState extends State<MenuDrawer> {
       backgroundColor: _primaryColor,
       foregroundColor: Colors.white,
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: const Icon(
-        Icons.search_rounded,
-        size: 22,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: const Icon(Icons.search_rounded, size: 22),
     );
   }
 }
@@ -821,11 +818,7 @@ class _GlowSpot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: color,
-            blurRadius: size / 3,
-            spreadRadius: size / 6,
-          ),
+          BoxShadow(color: color, blurRadius: size / 3, spreadRadius: size / 6),
         ],
       ),
     );

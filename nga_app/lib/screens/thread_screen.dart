@@ -130,21 +130,31 @@ class _ThreadScreenState extends State<ThreadScreen> {
         );
       }
 
-      setState(() {
-        if (page <= 1) {
-          _posts.addAll(uniquePosts);
+      if (page <= 1) {
+        setState(() {
+          _posts
+            ..clear()
+            ..addAll(uniquePosts);
           _hasMore = uniquePosts.isNotEmpty;
           _loading = false;
-        } else {
-          if (uniquePosts.isEmpty) {
+        });
+      } else {
+        if (uniquePosts.isEmpty) {
+          setState(() {
             _hasMore = false;
-          } else {
+            _loadingMore = false;
+          });
+        } else {
+          final mergedPosts = <ThreadPost>[..._posts, ...uniquePosts];
+          setState(() {
             _currentPage = page;
-            _posts.addAll(uniquePosts);
-          }
-          _loadingMore = false;
+            _posts
+              ..clear()
+              ..addAll(mergedPosts);
+            _loadingMore = false;
+          });
         }
-      });
+      }
     } catch (e) {
       setState(() {
         if (page <= 1) {
