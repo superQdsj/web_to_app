@@ -11,9 +11,28 @@ class ThreadParagraphBlock extends ThreadContentBlock {
 }
 
 class ThreadQuoteBlock extends ThreadContentBlock {
-  const ThreadQuoteBlock({required this.spans});
+  const ThreadQuoteBlock({required this.blocks, this.header});
 
-  final List<ThreadInlineNode> spans;
+  final List<ThreadContentBlock> blocks;
+  final ThreadQuoteHeader? header;
+}
+
+class ThreadQuoteHeader {
+  const ThreadQuoteHeader({
+    required this.authorName,
+    this.pid,
+    this.tid,
+    this.authorUid,
+    this.postTime,
+    this.label = 'R',
+  });
+
+  final String authorName;
+  final int? pid;
+  final int? tid;
+  final int? authorUid;
+  final String? postTime;
+  final String label;
 }
 
 class ThreadImageBlock extends ThreadContentBlock {
@@ -72,10 +91,12 @@ class ThreadRichDetail {
     required this.url,
     required this.fetchedAt,
     required this.posts,
+    required this.rawHtmlText,
   });
 
   final int tid;
   final String url;
   final int fetchedAt;
   final List<ThreadRichPost> posts;
+  final String rawHtmlText;
 }

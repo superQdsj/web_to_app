@@ -4,31 +4,78 @@ import '../model/thread_rich_detail.dart';
 
 class ThreadRichContentParser {
   List<ThreadContentBlock> parse(String rawHtml) {
+    return _parseBlocks(rawHtml);
+  }
+
+  List<ThreadContentBlock> _parseBlocks(
+    String rawHtml, {
+    bool allowReplyHeader = true,
+  }) {
     final normalized = _normalizeHtml(rawHtml);
     final blocks = <ThreadContentBlock>[];
 
-    final quotePattern = RegExp(r'\[quote\](.*?)\[/quote\]', dotAll: true);
+    const openTag = '[quote]';
+    const closeTag = '[/quote]';
     var cursor = 0;
-    for (final match in quotePattern.allMatches(normalized)) {
-      final before = normalized.substring(cursor, match.start);
-      _appendTextBlocks(before, blocks);
+    while (true) {
+      final start = normalized.indexOf(openTag, cursor);
+      if (start == -1) break;
+      final before = normalized.substring(cursor, start);
+      _appendTextBlocks(before, blocks, allowReplyHeader: allowReplyHeader);
 
-      final quoteText = match.group(1) ?? '';
-      final cleaned = _stripMetaTags(quoteText);
-      final spans = _parseInline(cleaned);
-      if (spans.isNotEmpty) {
-        blocks.add(ThreadQuoteBlock(spans: spans));
+      final end = _findMatchingQuoteEnd(normalized, start + openTag.length);
+      if (end == null) {
+        _appendTextBlocks(
+          normalized.substring(start),
+          blocks,
+          allowReplyHeader: allowReplyHeader,
+        );
+        cursor = normalized.length;
+        break;
       }
-      cursor = match.end;
+
+      final quoteText = normalized.substring(start + openTag.length, end);
+      final parsedQuote = _parseQuoteContent(quoteText);
+      final quoteBlocks = _parseBlocks(
+        parsedQuote.body,
+        allowReplyHeader: false,
+      );
+      if (quoteBlocks.isNotEmpty || parsedQuote.header != null) {
+        blocks.add(
+          ThreadQuoteBlock(
+            blocks: quoteBlocks,
+            header: parsedQuote.header,
+          ),
+        );
+      }
+      cursor = end + closeTag.length;
     }
     final tail = normalized.substring(cursor);
-    _appendTextBlocks(tail, blocks);
+    _appendTextBlocks(tail, blocks, allowReplyHeader: allowReplyHeader);
     return blocks;
   }
 
-  void _appendTextBlocks(String text, List<ThreadContentBlock> blocks) {
+  void _appendTextBlocks(
+    String text,
+    List<ThreadContentBlock> blocks, {
+    bool allowReplyHeader = true,
+  }) {
     if (text.trim().isEmpty) return;
-    final cleaned = _stripMetaTags(text);
+    var working = text;
+    if (allowReplyHeader) {
+      final replyParsed = _parseReplyHeader(working);
+      if (replyParsed != null) {
+        blocks.add(
+          ThreadQuoteBlock(
+            blocks: const [],
+            header: replyParsed.header,
+          ),
+        );
+        working = replyParsed.remaining;
+        if (working.trim().isEmpty) return;
+      }
+    }
+    final cleaned = _stripMetaTags(working);
 
     final imagePattern = RegExp(
       r'\[(img|attachimg)(?:=[^\]]+)?\](.*?)\[/\1\]',
@@ -74,12 +121,132 @@ class ThreadRichContentParser {
     return normalized.trim();
   }
 
+  int? _findMatchingQuoteEnd(String text, int startIndex) {
+    const openTag = '[quote]';
+    const closeTag = '[/quote]';
+    var depth = 1;
+    var cursor = startIndex;
+    while (cursor < text.length) {
+      final nextOpen = text.indexOf(openTag, cursor);
+      final nextClose = text.indexOf(closeTag, cursor);
+      if (nextClose == -1) return null;
+      if (nextOpen != -1 && nextOpen < nextClose) {
+        depth += 1;
+        cursor = nextOpen + openTag.length;
+        continue;
+      }
+      depth -= 1;
+      if (depth == 0) return nextClose;
+      cursor = nextClose + closeTag.length;
+    }
+    return null;
+  }
+
   String _stripMetaTags(String text) {
-    var cleaned = text
-        .replaceAll(RegExp(r'\[pid=[^\]]+\](.*?)\[/pid\]'), r'$1')
-        .replaceAll(RegExp(r'\[tid=[^\]]+\](.*?)\[/tid\]'), r'$1')
-        .replaceAll(RegExp(r'\[uid=[^\]]+\](.*?)\[/uid\]'), r'$1');
+    var cleaned = text;
+    cleaned = cleaned.replaceAllMapped(
+      RegExp(r'\[pid=[^\]]+\](.*?)\[/pid\]'),
+      (match) => match.group(1) ?? '',
+    );
+    cleaned = cleaned.replaceAllMapped(
+      RegExp(r'\[tid=[^\]]+\](.*?)\[/tid\]'),
+      (match) => match.group(1) ?? '',
+    );
+    cleaned = cleaned.replaceAllMapped(
+      RegExp(r'\[uid=[^\]]+\](.*?)\[/uid\]'),
+      (match) => match.group(1) ?? '',
+    );
     return cleaned;
+  }
+
+  ({ThreadQuoteHeader header, String remaining})? _parseReplyHeader(
+    String text,
+  ) {
+    final trimmed = text.trimLeft();
+    final replyToPattern = RegExp(
+      r'^\[b\]Reply to \[pid=(\d+),(\d+),(\d+)\]Reply\[/pid\]\s*'
+      r'Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\)',
+      dotAll: true,
+    );
+    final match = replyToPattern.firstMatch(trimmed);
+    if (match == null) return null;
+
+    final pid = int.tryParse(match.group(1) ?? '');
+    final tid = int.tryParse(match.group(2) ?? '');
+    final authorUid = int.tryParse(match.group(4) ?? '');
+    final authorName = match.group(5)?.trim();
+    final postTime = match.group(6)?.trim();
+    var remaining = trimmed.substring(match.end);
+    remaining = remaining.replaceFirst(RegExp(r'^\s*\[/b\]\s*'), '');
+    remaining = remaining.replaceFirst(RegExp(r'\s*\[/b\]\s*$'), '');
+    remaining = remaining.trimLeft();
+
+    return (
+      header: ThreadQuoteHeader(
+        authorName: authorName?.isNotEmpty == true ? authorName! : 'Unknown',
+        pid: pid,
+        tid: tid,
+        authorUid: authorUid,
+        postTime: postTime?.isNotEmpty == true ? postTime : null,
+      ),
+      remaining: remaining,
+    );
+  }
+
+  ({ThreadQuoteHeader? header, String body}) _parseQuoteContent(String text) {
+    final trimmed = text.trim();
+    final quotePattern = RegExp(
+      r'^\[pid=(\d+),(\d+),(\d+)\]Reply\[/pid\]\s*'
+      r'\[b\]Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\):\[/b\]'
+      r'(.*)$',
+      dotAll: true,
+    );
+    final topicPattern = RegExp(
+      r'^\[tid=(\d+)\]Topic\[/tid\]\s*'
+      r'\[b\]Post by \[uid=(\d+)\]([^\[]+)\[/uid\]\s*\(([^)]+)\):\[/b\]'
+      r'(.*)$',
+      dotAll: true,
+    );
+
+    var match = quotePattern.firstMatch(trimmed);
+    if (match != null) {
+      final pid = int.tryParse(match.group(1) ?? '');
+      final tid = int.tryParse(match.group(2) ?? '');
+      final authorUid = int.tryParse(match.group(4) ?? '');
+      final authorName = match.group(5)?.trim();
+      final postTime = match.group(6)?.trim();
+      final body = match.group(7)?.trim() ?? '';
+      return (
+        header: ThreadQuoteHeader(
+          authorName: authorName?.isNotEmpty == true ? authorName! : 'Unknown',
+          pid: pid,
+          tid: tid,
+          authorUid: authorUid,
+          postTime: postTime?.isNotEmpty == true ? postTime : null,
+        ),
+        body: body,
+      );
+    }
+
+    match = topicPattern.firstMatch(trimmed);
+    if (match != null) {
+      final tid = int.tryParse(match.group(1) ?? '');
+      final authorUid = int.tryParse(match.group(2) ?? '');
+      final authorName = match.group(3)?.trim();
+      final postTime = match.group(4)?.trim();
+      final body = match.group(5)?.trim() ?? '';
+      return (
+        header: ThreadQuoteHeader(
+          authorName: authorName?.isNotEmpty == true ? authorName! : 'Unknown',
+          tid: tid,
+          authorUid: authorUid,
+          postTime: postTime?.isNotEmpty == true ? postTime : null,
+        ),
+        body: body,
+      );
+    }
+
+    return (header: null, body: trimmed);
   }
 
   String _resolveImageUrl(String input) {

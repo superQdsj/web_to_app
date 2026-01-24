@@ -6,6 +6,7 @@ import 'package:html/parser.dart' as html_parser;
 import '../model/thread_detail.dart';
 import '../model/thread_rich_detail.dart';
 import 'thread_rich_content_parser.dart';
+import 'thread_rich_quote_resolver.dart';
 
 class ThreadRichParser {
   ThreadRichDetail parseThreadPage(
@@ -71,11 +72,13 @@ class ThreadRichParser {
       );
     }
 
+    final filledPosts = ThreadRichQuoteResolver.resolve(posts);
     return ThreadRichDetail(
       tid: tid,
       url: url,
       fetchedAt: fetchedAt,
-      posts: posts,
+      posts: filledPosts,
+      rawHtmlText: htmlText,
     );
   }
 

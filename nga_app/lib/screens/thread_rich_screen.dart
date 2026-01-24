@@ -1,10 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../data/nga_rich_repository.dart';
 import '../src/auth/nga_cookie_store.dart';
 import '../src/model/thread_rich_detail.dart';
+import '../src/parser/thread_rich_quote_resolver.dart';
 import '../theme/app_colors.dart';
 
 class ThreadRichScreen extends StatefulWidget {
@@ -30,6 +34,7 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
 
   int _currentPage = 1;
   late NgaRichRepository _repository;
+  final Map<int, String> _rawHtmlByPage = {};
 
   String get _cookie => NgaCookieStore.cookie.value;
 
@@ -67,6 +72,7 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
       _currentPage = 1;
       _posts.clear();
       _postKeys.clear();
+      _rawHtmlByPage.clear();
     });
 
     await _fetchThreadPage(1);
@@ -101,7 +107,9 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
     }
 
     if (kDebugMode) {
-      debugPrint('=== [NGA] Fetch rich thread cookie len=${_cookie.length} ===');
+      debugPrint(
+        '=== [NGA] Fetch rich thread cookie len=${_cookie.length} ===',
+      );
       debugPrint(
         '=== [NGA] Fetch rich thread cookie cookies: '
         '${NgaCookieStore.summarizeCookieHeader(_cookie)} ===',
@@ -113,13 +121,15 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
       final uniquePosts = detail.posts
           .where((post) => _postKeys.add(_threadPostKey(post)))
           .toList(growable: false);
+      final resolvedUniquePosts = ThreadRichQuoteResolver.resolve(uniquePosts);
+      _rawHtmlByPage[page] = detail.rawHtmlText;
 
       if (page <= 1) {
         setState(() {
           _posts
             ..clear()
-            ..addAll(uniquePosts);
-          _hasMore = uniquePosts.isNotEmpty;
+            ..addAll(resolvedUniquePosts);
+          _hasMore = resolvedUniquePosts.isNotEmpty;
           _loading = false;
         });
       } else if (uniquePosts.isEmpty) {
@@ -128,12 +138,15 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
           _loadingMore = false;
         });
       } else {
-        final mergedPosts = <ThreadRichPost>[..._posts, ...uniquePosts];
+        final mergedPosts = <ThreadRichPost>[..._posts, ...resolvedUniquePosts];
+        final resolvedMergedPosts = ThreadRichQuoteResolver.resolve(
+          mergedPosts,
+        );
         setState(() {
           _currentPage = page;
           _posts
             ..clear()
-            ..addAll(mergedPosts);
+            ..addAll(resolvedMergedPosts);
           _loadingMore = false;
         });
       }
@@ -148,6 +161,116 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
         }
       });
     }
+  }
+
+  Future<void> _dumpThreadRawHtml() async {
+    final mergedHtmlText = _mergeThreadRawHtml();
+    if (mergedHtmlText.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No raw HTML to save.')));
+      return;
+    }
+
+    try {
+      final dumpDir = await _resolveDumpDirectory();
+      final filePath = '${dumpDir.path}/${_buildThreadDumpFileName()}';
+      final file = File(filePath);
+      await file.writeAsString(mergedHtmlText, flush: true);
+      debugPrint('=== [NGA] Saved raw thread html: $filePath ===');
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Saved: $filePath')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Save failed: $e')));
+    }
+  }
+
+  Future<void> _dumpPostContent(ThreadRichPost post) async {
+    if (post.rawContent.trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No raw content to save.')));
+      return;
+    }
+
+    try {
+      final dumpDir = await _resolveDumpDirectory();
+      final filePath = '${dumpDir.path}/${_buildDumpFileName(post)}';
+      final file = File(filePath);
+      await file.writeAsString(post.rawContent, flush: true);
+      if (kDebugMode || Platform.isIOS) {
+        debugPrint('=== [NGA] Saved raw post html: $filePath ===');
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Saved: $filePath')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Save failed: $e')));
+    }
+  }
+
+  Future<Directory> _resolveDumpDirectory() async {
+    if (kIsWeb) {
+      throw UnsupportedError('Saving is not supported on web.');
+    }
+
+    Directory baseDir;
+    if (Platform.isAndroid) {
+      baseDir =
+          await getExternalStorageDirectory() ??
+          await getApplicationDocumentsDirectory();
+    } else {
+      baseDir = await getApplicationDocumentsDirectory();
+    }
+    final dumpDir = Directory('${baseDir.path}/nga_dump');
+    if (!await dumpDir.exists()) {
+      await dumpDir.create(recursive: true);
+    }
+    return dumpDir;
+  }
+
+  String _buildDumpFileName(ThreadRichPost post) {
+    final pid = post.pid?.toString() ?? 'unknown';
+    final floor = post.floor?.toString() ?? 'x';
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    return 'tid_${widget.tid}_pid_${pid}_floor_${floor}_$stamp.html';
+  }
+
+  String _buildThreadDumpFileName() {
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final pages = _rawHtmlByPage.keys.toList()..sort();
+    final pageLabel = pages.isEmpty ? _currentPage : pages.last;
+    return 'tid_${widget.tid}_pages_1_${pageLabel}_$stamp.html';
+  }
+
+  String _mergeThreadRawHtml() {
+    if (_rawHtmlByPage.isEmpty) {
+      return '';
+    }
+    final pages = _rawHtmlByPage.keys.toList()..sort();
+    final buffer = StringBuffer();
+    for (final page in pages) {
+      final htmlText = _rawHtmlByPage[page]?.trim() ?? '';
+      if (htmlText.isEmpty) {
+        continue;
+      }
+      if (buffer.isNotEmpty) {
+        buffer.writeln('\n<!-- NGA page $page -->\n');
+      }
+      buffer.writeln(htmlText);
+    }
+    return buffer.toString();
   }
 
   String _threadPostKey(ThreadRichPost post) {
@@ -197,6 +320,14 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: _dumpThreadRawHtml,
+            icon: const Icon(Icons.save_alt),
+            color: colors.textPrimary,
+            tooltip: '保存原始HTML',
+          ),
+        ],
       ),
       body: _buildBody(context),
     );
@@ -260,7 +391,11 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
             if (index >= _posts.length) {
               return _buildLoadMoreFooter(context);
             }
-            return _PostCard(post: _posts[index]);
+            final post = _posts[index];
+            return _PostCard(
+              post: post,
+              onLongPress: () => _dumpPostContent(post),
+            );
           },
         ),
       ),
@@ -312,10 +447,7 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Center(
-          child: Text(
-            '没有更多了',
-            style: TextStyle(color: colors.textMuted),
-          ),
+          child: Text('没有更多了', style: TextStyle(color: colors.textMuted)),
         ),
       );
     }
@@ -330,9 +462,10 @@ class _ThreadRichScreenState extends State<ThreadRichScreen> {
 }
 
 class _PostCard extends StatelessWidget {
-  const _PostCard({required this.post});
+  const _PostCard({required this.post, this.onLongPress});
 
   final ThreadRichPost post;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -343,75 +476,76 @@ class _PostCard extends StatelessWidget {
     final floorLabel = post.floor != null ? '#${post.floor}' : '楼层';
     final postDate = post.postDate ?? '';
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colors.cardSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: colors.postBackgroundSecondary,
-                backgroundImage:
-                    avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                child: avatarUrl == null
-                    ? Icon(Icons.person, color: colors.textMuted)
-                    : null,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      authorName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$floorLabel  $postDate',
-                      style: TextStyle(
-                        color: colors.textMuted,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+    return GestureDetector(
+      onLongPress: onLongPress,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colors.cardSurface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: colors.postBackgroundSecondary,
+                  backgroundImage: avatarUrl != null
+                      ? NetworkImage(avatarUrl)
+                      : null,
+                  child: avatarUrl == null
+                      ? Icon(Icons.person, color: colors.textMuted)
+                      : null,
                 ),
-              ),
-              if (post.deviceType != null && post.deviceType!.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.postBackgroundSecondary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    post.deviceType!,
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: 11,
-                    ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        authorName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$floorLabel  $postDate',
+                        style: TextStyle(color: colors.textMuted, fontSize: 12),
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _PostContent(blocks: post.contentBlocks),
-        ],
+                if (post.deviceType != null && post.deviceType!.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.postBackgroundSecondary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      post.deviceType!,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _PostContent(blocks: post.contentBlocks),
+          ],
+        ),
       ),
     );
   }
@@ -426,10 +560,7 @@ class _PostContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.ngaColors;
     if (blocks.isEmpty) {
-      return Text(
-        '内容为空',
-        style: TextStyle(color: colors.textMuted),
-      );
+      return Text('内容为空', style: TextStyle(color: colors.textMuted));
     }
 
     return Column(
@@ -448,7 +579,7 @@ class _PostContent extends StatelessWidget {
       return _ImageBlock(url: block.url);
     }
     if (block is ThreadQuoteBlock) {
-      return _QuoteBlock(spans: block.spans);
+      return _QuoteBlock(blocks: block.blocks, header: block.header);
     }
     if (block is ThreadParagraphBlock) {
       return _ParagraphBlock(spans: block.spans);
@@ -467,11 +598,7 @@ class _ParagraphBlock extends StatelessWidget {
     final colors = context.ngaColors;
     return RichText(
       text: TextSpan(
-        style: TextStyle(
-          color: colors.textPrimary,
-          fontSize: 15,
-          height: 1.4,
-        ),
+        style: TextStyle(color: colors.textPrimary, fontSize: 15, height: 1.4),
         children: _buildInlineSpans(context, spans),
       ),
     );
@@ -479,13 +606,20 @@ class _ParagraphBlock extends StatelessWidget {
 }
 
 class _QuoteBlock extends StatelessWidget {
-  const _QuoteBlock({required this.spans});
+  const _QuoteBlock({required this.blocks, this.header});
 
-  final List<ThreadInlineNode> spans;
+  final List<ThreadContentBlock> blocks;
+  final ThreadQuoteHeader? header;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.ngaColors;
+    final hasHeader = header != null;
+    final hasContent = blocks.isNotEmpty;
+    final headerText = header == null
+        ? ''
+        : 'by ${header!.authorName}'
+              '${header!.postTime != null ? ' (${header!.postTime})' : ''}';
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -493,17 +627,91 @@ class _QuoteBlock extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border(left: BorderSide(color: colors.divider, width: 3)),
       ),
-      child: RichText(
-        text: TextSpan(
-          style: TextStyle(
-            color: colors.textSecondary,
-            fontSize: 13,
-            height: 1.35,
-          ),
-          children: _buildInlineSpans(context, spans),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasHeader)
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.postBackgroundSecondary,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Text(
+                    header!.label,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    headerText,
+                    style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          if (hasHeader && hasContent) const SizedBox(height: 6),
+          if (hasContent)
+            _QuoteContent(
+              blocks: blocks,
+              textStyle: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
+        ],
       ),
     );
+  }
+}
+
+class _QuoteContent extends StatelessWidget {
+  const _QuoteContent({required this.blocks, required this.textStyle});
+
+  final List<ThreadContentBlock> blocks;
+  final TextStyle textStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final block in blocks) ...[
+          _buildQuoteBlock(context, block),
+          const SizedBox(height: 6),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildQuoteBlock(BuildContext context, ThreadContentBlock block) {
+    if (block is ThreadParagraphBlock) {
+      return RichText(
+        text: TextSpan(
+          style: textStyle,
+          children: _buildInlineSpans(context, block.spans),
+        ),
+      );
+    }
+    if (block is ThreadImageBlock) {
+      return _ImageBlock(url: block.url);
+    }
+    if (block is ThreadQuoteBlock) {
+      return _QuoteBlock(blocks: block.blocks, header: block.header);
+    }
+    return const SizedBox.shrink();
   }
 }
 
