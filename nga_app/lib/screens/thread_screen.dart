@@ -4,6 +4,7 @@ import '../src/nga_fetcher.dart';
 
 import '../data/nga_repository.dart';
 import '../src/auth/nga_cookie_store.dart';
+import 'thread_rich_screen.dart';
 
 part 'thread/thread_body.dart';
 part 'thread/thread_palette.dart';
@@ -218,6 +219,21 @@ class _ThreadScreenState extends State<ThreadScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ThreadRichScreen(
+                    tid: widget.tid,
+                    title: widget.title,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.article_outlined),
+            color: _ThreadPalette.textPrimary,
+            tooltip: '图文',
+          ),
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.more_horiz),
