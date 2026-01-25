@@ -6,6 +6,7 @@ import '../data/nga_repository.dart';
 import '../src/auth/nga_cookie_store.dart';
 import '../src/nga_forum_store.dart';
 import 'thread_screen.dart';
+import 'thread_dom_screen.dart';
 
 /// Forum content widget (embeddable).
 ///
@@ -239,7 +240,18 @@ class _ForumContentState extends State<ForumContent> {
             final thread = _threads[index];
             return _ThreadTile(
               thread: thread,
-              onTap: () => _openThread(thread),
+              onTap: () {
+                final isUsingNewThreadsUI = true;
+                if (isUsingNewThreadsUI) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ThreadDomScreen(tid: thread.tid, title: thread.title),
+                    ),
+                  );
+                } else {
+                  _openThread(thread);
+                }
+              },
             );
           },
         ),
